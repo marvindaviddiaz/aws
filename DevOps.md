@@ -6,7 +6,7 @@
 
 # CodeBuild (buildspec.yml)
 
-- En CodeBild todo el Serverless, solo se para por el tiempo que dure el build
+- En CodeBuild todo el Serverless, solo se para por el tiempo que dure el build
 - Al Crear el proyecto se define la imagen a usar para hacer los Builds: AWS Managed Image o Custom Image, así como los recursos y si queremos que corra adentro de una VPC. Lo minimo son 3GB y 2 vCPUs. Las imagenes de AWS son genéricas no incluyen frameworks.
 - El archivo de configuración se compone de: Variables, Fases, Artefactos
 - Dentro del archivo yaml se puede configurar el runtime-version ejemplo: `docker: 18`  si queremos crear y subir imagenes de docker, acá si se pueden usar runtimes de frameworks o lenguajes de programación.
@@ -22,19 +22,19 @@
 
 ### Deployment Configurations: 
 - Donde se define el tipo de Deployment, para EC2 tenemos los siguientes:
-	In-Place:
-		AllAtOnce
-		OneAtATime
-		HalfAtATime
-		Custom (Ejemplo: Mínimo que el 80% siempre esté disponible al ir desplegando)
-	Blue/Green:
-		Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
-		En BLueGreen el LB es necesario
+	1. In-Place:
+		- AllAtOnce
+		- OneAtATime
+		- HalfAtATime
+		- Custom (Ejemplo: Mínimo que el 80% siempre esté disponible al ir desplegando)
+	2. Blue/Green:
+		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
+		- En BLueGreen el LB es necesario
 
 - Para lambda existen los siguientes:
-	AllAtOnce, 
-	Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
-	Linear: **EQUALS INCREMENTS** Ej. Mandar incrementos de 10% del tráfico cada 10 minutos (se completaría en 100 minutos ó 10 veces) 
+	- AllAtOnce, 
+	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
+	- Linear: **EQUALS INCREMENTS** Ej. Mandar incrementos de 10% del tráfico cada 10 minutos (se completaría en 100 minutos ó 10 veces) 
 
 
 ### Rollbacks
