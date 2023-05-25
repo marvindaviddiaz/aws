@@ -849,34 +849,34 @@ Los HealthChecks también ser integran con CW Metrics para enviar alertas, etc..
 - **RTO**: Cuando tiempo dura el Downtime
 
 Estrategias:
-	- **Backup and Restore**:  
-		Fácil, no es muy caro, High RPO/RTO
-	- **Pilot Light**: 
-		Una versión pequeña de la aplicación siempre está corriendo en la Nube. Más rápido que Backup/Restore. Pero se necesita un servicio de replicación de Data 			
-	- **Warm Standby**:
-		Sistema Full arriba y corriendo, pero a la mínima cantidad, en desastres se escala la carga.
-		Tambien se necesita servicio de Replicación de Data
-	- **Hot Site / Multi Site Approach**: 
-		Todo el sistema corriendo en AWS y OnPremise
-		Mínimo RPO/RTO
-	- **All AWS Multi Region**
-		Todo el sistema corriendo en 2 regiones diferentes
-		Aurora Global Master y Slave
+- **Backup and Restore**:  
+	Fácil, no es muy caro, High RPO/RTO
+- **Pilot Light**: 
+	Una versión pequeña de la aplicación siempre está corriendo en la Nube. Más rápido que Backup/Restore. Pero se necesita un servicio de replicación de Data 			
+- **Warm Standby**:
+	Sistema Full arriba y corriendo, pero a la mínima cantidad, en desastres se escala la carga.
+	Tambien se necesita servicio de Replicación de Data
+- **Hot Site / Multi Site Approach**: 
+	Todo el sistema corriendo en AWS y OnPremise
+	Mínimo RPO/RTO
+- **All AWS Multi Region**
+	Todo el sistema corriendo en 2 regiones diferentes
+	Aurora Global Master y Slave
 
 
 Tips:
-	**Backups**:	
-		EBS Snapshots, RDS automated backups
-		Desde OnPremise: Snowball o Storage Gateway
-	**High Available**:
-		Route53, RDS, ElastiCache, Site to Site VPN, Direct Connect
-	**Replication**:
-		RDS Replication, Aurora + Global Databases
-		Storage Gateway
-	**Automation**:
-		CF, EB, Lambda
-	**Chaos Testing**
-		Netflix "simian-army"
+**Backups**:	
+	EBS Snapshots, RDS automated backups
+	Desde OnPremise: Snowball o Storage Gateway
+**High Available**:
+	Route53, RDS, ElastiCache, Site to Site VPN, Direct Connect
+**Replication**:
+	RDS Replication, Aurora + Global Databases
+	Storage Gateway
+**Automation**:
+	CF, EB, Lambda
+**Chaos Testing**
+	Netflix "simian-army"
 
 # On-Premise Strategies with AWS
 
@@ -927,8 +927,7 @@ Tips:
 
 - Para enviar los Cloudwatch logs a una sola cuenta:
 
-	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3
-	
+`	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3 `
 
 
 # Control Tower  
