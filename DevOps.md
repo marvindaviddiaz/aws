@@ -638,15 +638,15 @@ S3 Data Encryption At Rest
 Encripción de EBS, EFC, RDS, ElasticCache, DynamoDB
 - Se puede usar la llave del servicio o una propia de KMS
 
-PHI = Protected Health Information 
-PII = Personally-Identifying Information
+-PHI = Protected Health Information 
+-PII = Personally-Identifying Information
 
-Direct Connect = Conexión privada directa entre site y AWS
-VPN = Site-to-Site para protejer a nivel de internet
-Network ACL: stateless firewall a nivel de VPC
-WAF: Seguridad web contra Exploits
-Security Group: Staful firewall a nivel del Hypervisor de instancia 
-System Firewall: Instalar firewall dentro de EC2 (Linux firewalls, Windows Firewall)
+- Direct Connect = Conexión privada directa entre site y AWS
+- VPN = Site-to-Site para protejer a nivel de internet
+- Network ACL: stateless firewall a nivel de VPC
+- WAF: Seguridad web contra Exploits
+- Security Group: Staful firewall a nivel del Hypervisor de instancia 
+- System Firewall: Instalar firewall dentro de EC2 (Linux firewalls, Windows Firewall)
 
 
 
