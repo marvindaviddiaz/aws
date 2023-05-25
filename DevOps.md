@@ -22,12 +22,12 @@
 
 ### Deployment Configurations: 
 - Donde se define el tipo de Deployment, para EC2 tenemos los siguientes:
-	1. In-Place:
+	- In-Place:
 		- AllAtOnce
 		- OneAtATime
 		- HalfAtATime
 		- Custom (Ejemplo: Mínimo que el 80% siempre esté disponible al ir desplegando)
-	2. Blue/Green:
+	- Blue/Green:
 		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
 		- En BLueGreen el LB es necesario
 
