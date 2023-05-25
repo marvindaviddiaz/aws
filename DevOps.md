@@ -50,7 +50,9 @@
 
 - Cada etapa del pipeline puede crear Artifacts, los almacena en S3 y es la entrada para la siguiente etapa
 - Por cada branch se debe crear un pipeline
-- Para iniciar el pipeline se puede de 2 formas: `Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
+- Para iniciar el pipeline se puede de 2 formas: 
+
+Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - Los artifacts de CodePipeline son diferentes de los artifacts de CodeBuild
 - Se pueden agregar ManualAprovals dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo pipeline)
 - Cuando un pipeline se define por CF (código), el atributo `runOrder` en los StageAction indica el órden de ejecución
@@ -927,7 +929,7 @@ Tips:
 
 - Para enviar los Cloudwatch logs a una sola cuenta:
 
-`	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3 `
+	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3
 
 
 # Control Tower  
