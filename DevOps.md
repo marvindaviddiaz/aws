@@ -867,18 +867,18 @@ Estrategias:
 
 
 Tips:
-**Backups**:	
-	EBS Snapshots, RDS automated backups
-	Desde OnPremise: Snowball o Storage Gateway
-**High Available**:
-	Route53, RDS, ElastiCache, Site to Site VPN, Direct Connect
-**Replication**:
-	RDS Replication, Aurora + Global Databases
-	Storage Gateway
-**Automation**:
-	CF, EB, Lambda
-**Chaos Testing**
-	Netflix "simian-army"
+- **Backups**:	
+EBS Snapshots, RDS automated backups
+Desde OnPremise: Snowball o Storage Gateway
+- **High Available**:
+Route53, RDS, ElastiCache, Site to Site VPN, Direct Connect
+- **Replication**:
+RDS Replication, Aurora + Global Databases
+Storage Gateway
+-**Automation**:
+CF, EB, Lambda
+-**Chaos Testing**
+Netflix "simian-army"
 
 # On-Premise Strategies with AWS
 
