@@ -258,8 +258,8 @@
 	 - Requiere un Dockerrun.aws.json en los fuentes, y la imagen debe ser pre subida en ECR
 
 	 ### Roles en ECS 
-	 	 - **Classic**: Cuando se crea un clúster ECS Classic, a las instancias se les asigna un Rol el cuál tiene los permisos para modificar el clúster, descargar imagenes de ECR, etc. Cuando se lanzan Services el Service tiene un TaskDefinition y ese a a su vez tiene un TaskRole, ese TaskRole tiene un TrusRelationship para que solo pueda ser asumido por ECS y es el que va a tener los permisos que necesitan los contenedores /aplicación. 
-	 	 - **Fargate**: Cuando se crea un clúster ECS Fargate, como no hay instancias solo se crea el Rol TaskRole. (Más simple)
+	 - **Classic**: Cuando se crea un clúster ECS Classic, a las instancias se les asigna un Rol el cuál tiene los permisos para modificar el clúster, descargar imagenes de ECR, etc. Cuando se lanzan Services el Service tiene un TaskDefinition y ese a a su vez tiene un TaskRole, ese TaskRole tiene un TrusRelationship para que solo pueda ser asumido por ECS y es el que va a tener los permisos que necesitan los contenedores /aplicación. 
+	 - **Fargate**: Cuando se crea un clúster ECS Fargate, como no hay instancias solo se crea el Rol TaskRole. (Más simple)
 
 	 ### Autoscaling
 	 - En ECS se configura a nivel del Servicio, minimo, máximo, Scaling Policy, etc..
