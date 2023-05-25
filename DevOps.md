@@ -309,7 +309,6 @@
 
 
 # CloudTrail
-_____________
 
 - El trail puede capturar los eventos de todas la regiones
 - CloudTrail envía los archivos a s3 pero también se puede configurar para enviarlos a CloudWatch Logs (Ambos al mismo tiempo)
@@ -412,7 +411,6 @@ _____________
 
 
 # X-Ray
-_______
 
 - **Keywords** para el examen: Traces, Debbuging, Distributed application
 - Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación (Ver link del DevOps Blog)
@@ -478,7 +476,6 @@ _______
 
 
 # CONFIG
-________
 
 - Util para dar seguimiento a la configuración de todos los recursos de una cuenta
 - Cada regla que se agrega tiene un costo de $1 al mes
