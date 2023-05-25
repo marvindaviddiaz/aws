@@ -760,23 +760,24 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 - La capacidad On-Demand (siempre va a funcionar bien) es mucho más cara que Provisioned. Cuando se selecciona Provisioned se definen los Read/Write Capacity Units ó el mínimo y máximo para escalamiento.
 
 ### DAX: 
-	Clúster de Dynamo a nivel de tabla para lecturas intensivas, elegimos el tipo de instancia de los nodos y cuantos queremos, para que la data más accesada se mantenga en memoria.
+Clúster de Dynamo a nivel de tabla para lecturas intensivas, elegimos el tipo de instancia de los nodos y cuantos queremos, para que la data más accesada se mantenga en memoria.
+
 ### Dynamo Streams
-	- Para enviar los eventos de los items a un lambda, se puede configurar para enviar varios al mismo tiempo (batchs), se puede enviar solo las llaves, la nueva, vieja ó ambas versiones del item. Loguea INSERT, UPDATE, DELETE
-	- Con Dynamo Streams solo podemos conectar 2 lambdas al mismo tiempo, por el límite de Kinesis Streams que es lo que usa por debajo. Si quisieramos tener 3 lambdas conectadas, lo mejor sería tener un lambda conectada y ese Lambda haría el envío a SNS Topics y luego a este Topic si tener varias Lambdas conectadas.
+- Para enviar los eventos de los items a un lambda, se puede configurar para enviar varios al mismo tiempo (batchs), se puede enviar solo las llaves, la nueva, vieja ó ambas versiones del item. Loguea INSERT, UPDATE, DELETE
+- Con Dynamo Streams solo podemos conectar 2 lambdas al mismo tiempo, por el límite de Kinesis Streams que es lo que usa por debajo. Si quisieramos tener 3 lambdas conectadas, lo mejor sería tener un lambda conectada y ese Lambda haría el envío a SNS Topics y luego a este Topic si tener varias Lambdas conectadas.
 
 ### Global Tables
-	Solo se puede habilitar cuando esta activo Dynamos Streams y la tabla esté vacía.
-	Sive para tener una replica de la tabla en otra region
-	Si se insertan en la replica también se reflejan en la principal (Two-Ways replication)
+- Solo se puede habilitar cuando esta activo Dynamos Streams y la tabla esté vacía.
+- Sive para tener una replica de la tabla en otra region
+- Si se insertan en la replica también se reflejan en la principal (Two-Ways replication)
 
 ### TTL
-	- Tiempo de expiración de los Items
-	- Cuando se elimina el registro también se manda el evento a Dynamo Streams, y si está habilitado GlobalTables, también se borra de las replicadas.
+- Tiempo de expiración de los Items
+- Cuando se elimina el registro también se manda el evento a Dynamo Streams, y si está habilitado GlobalTables, también se borra de las replicadas.
 
 ### CUs
-	- Cuando escriben a S3, llamar a un Lambda para que en Dynamo almacene la Metadata de los archivos, para poder: buscar por fecha, calcular el espacio de cada usuario en el bucket, listar objetos con ciertos atributos, listar objetos que se subieron cierto rango de fechas.
-	- Construir un API para buscar Items con:  Dynamo + Dynamo Streams + Lambda + Elastic Search
+- Cuando escriben a S3, llamar a un Lambda para que en Dynamo almacene la Metadata de los archivos, para poder: buscar por fecha, calcular el espacio de cada usuario en el bucket, listar objetos con ciertos atributos, listar objetos que se subieron cierto rango de fechas.
+- Construir un API para buscar Items con:  Dynamo + Dynamo Streams + Lambda + Elastic Search
 
 
 # Multi AZ in AWS
