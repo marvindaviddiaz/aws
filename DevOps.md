@@ -83,12 +83,12 @@
 - `Fn:Base64` sirve para codificar un string en base64 ideal para el UserData de una EC2
 
 - **cfn-init**: 
-	Correr scripts de una manera más elegante, EC2 se comunica con CF para bajar los scripts en formato yaml
-	Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible
-	Para llamar cf-init se hace desde el UserData:
+	- Correr scripts de una manera más elegante, EC2 se comunica con CF para bajar los scripts en formato yaml
+	- Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible
+	- Para llamar cf-init se hace desde el UserData:
 		`/opt/aws/bien/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region}`
-	Los logs de cfn-init se almacenan en `/var/log/cfn-init.log`
-	Para que el template se quede esperando el resultado de cfn-init se usa `cfn-signal`
+	- Los logs de cfn-init se almacenan en `/var/log/cfn-init.log`
+	- Para que el template se quede esperando el resultado de cfn-init se usa `cfn-signal`
 		`/opt/aws/bien/cfn-signal  -e $? SampleWaitCondition ...`
 
 - En la CREACIÓN del stack por defecto `Onfailure=ROLLBACK`  tambien se puede usar `OnFailure=DO_NOTHING`, para la actualización siempre se hace rollback en caso de fallos
@@ -319,12 +319,12 @@ _____________
 - Al integrarlo a CloudWatch Logs se pueden crear métricas
 - Por defecto los archivos se encriptan usando SSE-S3
 - Estructura del Log:
-	`userIdentity`: Quién hizo el request
-	`eventTime`: Cuándo
-	`eventSource`: Dónde
-	`eventName`: Qué
-	`requestParameters`: Parámetros adicionales
-	`responseElements`: Respuesta
+	- `userIdentity`: Quién hizo el request
+	- `eventTime`: Cuándo
+	- `eventSource`: Dónde
+	- `eventName`: Qué
+	- `requestParameters`: Parámetros adicionales
+	- `responseElements`: Respuesta
 - Puede haber un Delay de hasta 15 minutos por parte de CloudTrail, para eventos en tiempo Real se recomienda usar Cloudwatch Events
 - El digest de los archivos aparece cada hora
 - **Integridad de los logs**: Con el siguiente comando podemos ver si un archivo fue alterado ó eliminado
@@ -337,9 +337,9 @@ _____________
 - Kinesis es una altenativa a Apache Kafka, ideal para BigData en "real-time", IoT, clickstreams
 - La Data es automaticamente replicada a 3 AZ
 - Hay 3 servicios asociados a Kinesis:
-	**Streams**:   streaming de ingesta de baja latencia a gran escala
-	**Analytycs**: Analisis en tiempo real de Streams usando SQL 
-	**Firehose**: Carga de Streams hacia S3, Redshift, ElasticSearch, Splunk...
+	- **Streams**:   streaming de ingesta de baja latencia a gran escala
+	- **Analytycs**: Analisis en tiempo real de Streams usando SQL 
+	- **Firehose**: Carga de Streams hacia S3, Redshift, ElasticSearch, Splunk...
 
 - El Producer puede enviar 1 MB/s ó 1,000 mensajes de escritura POR SHARD, si no se obtiene `ProvisionedThroughputException`
 - El Consumer puede leer 2 MB/s en lectura por SHARD en todos los consumers
@@ -349,12 +349,12 @@ _____________
 	**Kinesis Consumers**: Kinesis SDK, Kinesis Client Library KCL, Kinesis Connector LIbrary, Kinesis Firehose, AWS Lambda
 						Terceros (Spark, Log4j Appenders, Flume, Kafka Connect)
 - **TIP**:  
-	Kinesis Streams
-	- Tiempo Real
-	- Custom Code (producer / consumer)
-	Firehose
-	- Casi Tiempo Real
-	- Fully managed
+	- Kinesis Streams
+		- Tiempo Real
+		- Custom Code (producer / consumer)
+	- Firehose
+		- Casi Tiempo Real
+		- Fully managed
 
 
 # Cloudwatch
