@@ -390,12 +390,12 @@ _____________
   	 - Lambda
   	 - OpenSearch
   - **AWS Managed Logs**:
-  		- Cloudtrail Logs => S3 y CWL
-  		- VPC Flow Logs =>  S3 y CWL
-  		- Route 53 Access Logs =>  CWL
-  		- Load Balancer Access Logs (ALB, NLB, CLB) => S3
-  		- S3 Access Logs => S3
-  		- Cloudfront Access Logs -> S3
+    - Cloudtrail Logs => S3 y CWL
+    - VPC Flow Logs =>  S3 y CWL
+    - Route 53 Access Logs =>  CWL
+    - Load Balancer Access Logs (ALB, NLB, CLB) => S3
+    - S3 Access Logs => S3
+    - Cloudfront Access Logs -> S3
 
 
 # EventBridge
