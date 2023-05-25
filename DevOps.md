@@ -661,7 +661,8 @@ Encripción de EBS, EFC, RDS, ElasticCache, DynamoDB
 - Launch Template da la flexibilidad de lanzar diferentes tipos de instancia cuando se está creando el AG ej: t2.micro y large, así como lanzar unas OnDemand y otras Spot
 - Cooldown = Tiempo que debe pasar antes de que otro evento de escalamiento suceda (scale in, scale out).
 
-### Scheduled Actions: En está opción del AG se puede cambiar el min/max/deseado a una hora específica.
+### Scheduled Actions: 
+En está opción del AG se puede cambiar el min/max/deseado a una hora específica.
 
 ### Scaling Policy: 
 
