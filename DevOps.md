@@ -72,7 +72,6 @@
 - **EC2 Plugin**: Lanza EC2 para levantar agentes dinámicos.
 - **CodeBuild Plugin**: Usa CodeBuild en lugar de agentes fijos, volviendo un poco serverless la solución.
 - **ECS Plugin**: Usa ECS en lugar de agentes fijos, volviendo un poco serverless la solución.
-- Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
 
 # Cloudformation:
 
