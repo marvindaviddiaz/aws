@@ -468,6 +468,10 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - El agente viene por defecto instalado en las Linux AMI y Ubuntu AMI
 - **TIP**: si una instancia no se puede controlar desde SSM, puede ser un problema con el agente ó con el Rol 
 
+- **Default Host Management Configuration (DHMC)**:
+	- Cuando se activa en FleetManager, todas las instancias que se lancen en esa región se vuelven **Managed Instances** manejadas por SSM (Session Manager, Patch Manager, Inventory, Fleet manager.
+	- Es necesaio que el agente esté actualizado a las últimas versiones.
+
 - **Hybrid Activation**: 
 	- Opción en SSM donde se pueden crear credenciales para usar el agente de SSM en máquinas OnPremise, estas credenciales tienen asociado un ROL que es el que usa el agente. 
 		`sudo amazon-ssm-agent -register -code .. -id .. -region`, luego `systemctl start amazon-ssm-agent` 
