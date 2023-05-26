@@ -67,6 +67,14 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - En las opciones del proyecto de CodeStar se puede configurar y ver todo en el formulario: buckets, roles de servicio, CF.. 
 - A bajo nivel CodeStar está configurado con un CF template.yml usando una transformación `AWS::CodeStar`
 
+
+# Jenkins:
+
+- Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
+- **EC2 Plugin**: Lanza EC2 para levantar agentes dinámicos.
+- **CodeBuild Plugin**: Usa CodeBuild en lugar de agentes fijos, volviendo un poco serverless la solución.
+- **ECS Plugin**: Usa ECS en lugar de agentes fijos, volviendo un poco serverless la solución.
+
 # Code Artifact
 
 - Para almacenar dependencias: Maven, Gradle, npm, yarn, pip...
@@ -100,12 +108,6 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 -  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
 -  Se integra con CodeCommit para tener deployments por branch
 
-# Jenkins:
-
-- Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
-- **EC2 Plugin**: Lanza EC2 para levantar agentes dinámicos.
-- **CodeBuild Plugin**: Usa CodeBuild en lugar de agentes fijos, volviendo un poco serverless la solución.
-- **ECS Plugin**: Usa ECS en lugar de agentes fijos, volviendo un poco serverless la solución.
 
 # Cloudformation:
 
