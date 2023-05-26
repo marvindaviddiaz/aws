@@ -252,6 +252,9 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - A nivel de Cloudwatch Rules se pueden configurar eventos basados en las transiciones y estados de StepFunction
 - En la consola se puede ir viendo las tranciciones en el flujo, el input y output de cada paso, etc..
 
+- **Cross-Account EFS Mounting**:
+Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un VPC Peering y que la política del EFS permita `ClientMount` y `ClientWrite` a la otra cuenta (parte `Principal`) 
+
 
 # API GATEWAY
 
@@ -267,7 +270,22 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - Con los 'Usage Plans' se puede limitar el número de RPS para un API Key. Se puede limitar por Segundo, Por Mes, y esta configuración se puede granularizar a nivel de API + Stage + URL + Method.
 - **Tip Examen**: Es posible tener Throttles a nivel de API Gateway, a nivel de Usage Plan y a nivel de Lambda.
 - Usando la integración de `AWS Service` podemos llamar desde API Gateway a un StepFunction, en el json body del Request deben ir 3 propiedades: input (json del step function), name, stateMachineArn. La respuesta es async y nos indica que el Statemachine ha sido iniciado.
+- Se puede definir el APi usando **Open API** para que AWS valide los request antes de enviarlos a los lambda
+- Con `x-amazon-apigateway-request-validators` se le puede indicar si queremos validar todo, ó solo el body o solo los parámetros
 
+# ECR
+
+- Se pueden crear lyfecycle policies en ECR para borrar imágenes por ejemplo basado en días ó en cantidad de descargas. (viejas o sin utilizar)
+
+# EKS
+- CU: Si la empresa ya esta usando K8s OnPremise o en otra Nube y quiere migrar a AWS
+- Tipos de nodos:
+	- **Managed Node Groups**: Nodos EC2 Manejados por AWS, Usa un ASG, Soporta OnDemand y Spot 
+	- **Self-Managed Nodes**: Nodos creados por uno mismo, agregados a un ASG, Soporta OnDemand y Spot
+	- **Fargate**: Serverless
+- Container Storage Interface (CSI) soporta: **EBS, EFS, FSx for Lustre, FSx for NetApp ONTAP**
+- Se puede configurar el ControlPlane para activar el Logging y enviarlo a CloudwatchLogs
+- Pero para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
 
 # ECS
 
