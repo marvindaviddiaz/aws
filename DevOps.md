@@ -206,7 +206,16 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 	- Ambientes en EB que se utilizan para correr tareas de larga duración o calendarizadas. (Encode a video)
 	- En EB se puedeb crear ambientes de 2 tipos: Web Server, Worker
 	- Este ambiente crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
-	
+
+# AWS CDK - CLOUD DEVELOPMENT KIT
+
+- Sirve para definir infraestructura usando lenguajes de programación: JS, TS, Java y .Net (para no usar Yaml/JsonProducto no disponible en esta tienda)
+- Utiliza componentes de alto nivel llamados **Constructs**
+- `const vpc = new ec2.Vpc(this, "MyVpc", {...` 
+- Genera CF por debajo
+- La ventaja de usar código es que los errores aparecen en el IDE, a diferencia de CF Yaml que hay que subir y esperar a que falle
+- `cdk bootstrap`, `cdk synth`, `cdk deploy`
+
 
 # LAMBDA
 
@@ -509,6 +518,11 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 	- Se guardan todos los comandos ejecutados en la sesión ya sea en S3 ó Clouwatch Log
 	- Se establece desde el navegador (Sin llaves)
 	- El usuario que usa es ssm-user
+
+- **SSM AppConfig**
+	- Permite Configurar, Validar y Desplegar configuraciones dinámicas a las aplicaciones.
+	- No se necesita reinicar la aplicación
+	- La configuración se puede almacenar en: Parameter Store / SSM Documents / S3
 
 
 # CONFIG
