@@ -481,6 +481,11 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 ## Anomaly Detection
   - Monitoreia y analiza las métricas para determinar anomalias usando algoritmos de ML
 
+## Synthetics Canary
+  - Scripts configurables que monitorean APIs, URLs, Websites..
+  - Reproducir lo que los clientes hacen en el sitio antes que los clientes sean impactados.
+  - Los scripts se escriben en Nodejs o Python
+  - Se usa Headless Google Chrome
 
 # Amazon Lookout for Metrics
 
@@ -504,6 +509,25 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 
 - **Keywords** para el examen: Traces, Debbuging, Distributed application
 - Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación (Ver link del DevOps Blog)
+
+# Athena
+
+- **Servicio Serverless de Queries** que permite analizar data almacenada en S3 en SQL
+- Soporta CSV, JSON, ORC, Avro, Parquet
+- $5 por TB scaneado
+- Comunmente usado con Quicksight para reportes/dashboard
+- CU: **BI / Analytics / Reportes, Hacer queries a VPC Flow Logs, ELB Logs, Cloudtrail trails**, etc..
+- Performance:
+  - Para mejorar el costo se recomienda usar **columnar data** (menos scans). Para esto se debe usar el formato Apache Parquet o ORC. Usar Glue para convertir la data a Parquet o ORC
+  - **Comprimir la data** usar bzip2, gzip,..
+  - **Particionar** los datasets in S3 para buscar la data específica leyendo menos. Usar el nombre de la columna y valor para el directorio
+  	`s3://bucket/path_table
+	 s3://bucket/path_table/year=2023
+	 s3://bucket/path_table/year=2023/month=1
+	 ...
+	`
+  - **Usar archivos mayores** a 128MB para minimizar overhead	
+ - **Federated Query** Permite configurar un Lambda para obtener información de donde sea (ElastcCache, DocumentDB, RDS, Dynamo, Redshift, DB Onpremise) parsearla y almacenarla en S3 para que Athena la use.
 
 
 # SSM
