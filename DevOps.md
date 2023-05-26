@@ -36,7 +36,6 @@
 	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
 	- Linear: **EQUALS INCREMENTS** Ej. Mandar incrementos de 10% del tráfico cada 10 minutos (se completaría en 100 minutos ó 10 veces) 
 
-
 ### Rollbacks
 - Los rollbacks se pueden hacer manuales ó automáticos, los automáticos pueden ser: 
  1. basados en que si Falla el Deploy
@@ -67,6 +66,39 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - Por debajo usa CF, CodeCommit, CodeBuild, CodePipeline, según la plantilla que se usó.
 - En las opciones del proyecto de CodeStar se puede configurar y ver todo en el formulario: buckets, roles de servicio, CF.. 
 - A bajo nivel CodeStar está configurado con un CF template.yml usando una transformación `AWS::CodeStar`
+
+# Code Artifact
+
+- Para almacenar dependencias: Maven, Gradle, npm, yarn, pip...
+- Tambien funciona como proxy para los repositorios centrales y almacena una copia.
+- Se le puede dar acceso a otras cuentas por medió de IAM Policies.
+- **Upsteam Repositories**: Descargar dependencias de un solo endpoint y el Upsteam apuntar hasta a 10 repositorios.
+- Los Domains sirven para agrupar repositorios, lo ideal es que en una sola cuenta este CodeArtifact y por medio de dominios demos acceso a otras cuentas de AWS.
+- En un lambda se puede agregar usando anotaciones (decorator) ó tambien desde la consola de aws.
+
+# Code Guru
+
+- Automatiza las revisiones de código, usa ML
+- Da 2 funcionalidades: **CodeGuru Reviewer** (analisis estático) y **CodeGuru Profiler** (performance en ejecución)
+- Soporta Java y Python
+- Se integra con Github, Bitbucket, CodeCommit
+- Puede ser usado en aplicaciones corriendo en AWS o OnPremise
+- **CodeGuru Reviewer Secrets Detector** Usa ML para detectar secrets, passwords, llaves, etc. en el código
+
+# EC2 Image Builder
+
+- Automatizar la creación, mantenimientoy validación de AMIs o Container Images
+- Puede publicar AMIs a multiples regiones y cuentas
+- Con **AWS RAM** (Resource Access Manager) se pueden compartir Images, Recipes, Components a otras cuentas
+- Después de construir una imagen se recomienda almacenar el AMI ID en SSM Parameter Store, para que los cloudformation tengan siempre la última versión de las AMIs
+
+# AWS Amplify
+
+-  Se usa para construir aplicaciones Web y Mobile.
+-  Para configurar el Backend ya se integra con varios servicios: S3, Cognito, AppSync, Api Gateway, Sagemaker, Lambda, Dynamo.. (Todo en un solo lugar)
+-  Para el frontend se usan librerias de Amplify para diferentes plataformas: Flutter, Ionic, Next, Angular, React, IOs, Android..
+-  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
+-  Se integra con CodeCommit para tener deployments por branch
 
 # Jenkins:
 
