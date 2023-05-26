@@ -1099,5 +1099,26 @@ Netflix "simian-army"
 
 * Ver un video más completo de Control Tower
 
+# AWS IAM Identity Center (Sucesor de AWS Single Sign-On)
 
+- **Un solo login** para todas las Cuentas en una Organización, Aplicaciones de Negocio, Aplicaciones SAML 2.0, Instancias EC2 Windows 
+- Se puede integrar con AD, OneLogin, Okta...
+- Por medio de **Permission Set** se limitan los permisos que tendrán los usuarios/grupos de IAM Identity Center.
+
+# AWS Tag Editor
+- Permite administrar los tags de múltiples recursos a la vez
+
+# AWS QuickSight
+- Servicio para crear Dashboard de forma Serverless usando ML
+
+# AWS Glue
+- Servicio Serverless Administrado de ETL (Extractm Transform, Load)
+- Útil para preparar y transformar data para analytics
+- CU: Tranformar data en CSV a formato **Parquet** para luego analizarla en Athena de manera más eficiente.
+- **Glue Data Crawler** Lee metadata de S3, RDS, Dynamo, JDBC y la escribe a **Glue Data Catalog**
+- **Glue Job Bookmarks** Previene reprocesar data vieja
+- **Glue Elastic Views** Tablas Virtuales (Materialized view)
+- **Glue DataBrew** limpia y normaliza data usando transformaciones preconstruidas.
+- **Glue Studio** GUI para crear, correr y monitorear Jobs ETL
+- **Glue Streaming ETL** Streaming Jobs usando Apache Spark
 
