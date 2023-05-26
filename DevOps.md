@@ -341,6 +341,25 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	 - Con Cloudwatch Events se pueden configurar reglas basadas en los eventos de ECS ej: cuando se termina un container, quiere levantar otra tarea, enviar una alarma, ejecutar un comando, etc..
 
 
+# DMS Database Migration Service
+
+- Para migrar DBs a hacia AWS / OnPremise, resilient, self healing
+- Migraciones Homogeneas y Heterogeneas
+- La tarea de migración se ejecuta en una EC2
+- Como Source y Target se puede usar RDS, S3, DocumentDB, OpenSearch, Redshift, Kafka, Neptune, Redis... 
+- Para hacer la conversión entre diferentes motores se usa el **Schema Conversion Tool SCT** (si se usa el mismo motor no es necesario). Ej:
+	- SQL Server -> Mysql
+
+# AWS Storage Gateway
+- Es el puente entre la Data OnPremise  y Cloud
+- Para almacenar la data Storage Gateway puede usar: **EBS, S3, Glacier**
+- Los tipos de Storage Gateway son:
+	- File Gateway
+	- Volume Gateway
+	- Tape Gateway
+- Cache Refresh, sirve para que los usuarios en OnPremise vean los archivos que se crearon directamente en un bucket.
+
+
 # OpsWorks
 
 - OpsWorks consta de 3 partes: OpsWorks Stack, OpsWorks for Chef Automate, OpsWorks for Puppet Enterprise
@@ -459,6 +478,14 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
     - S3 Access Logs => S3
     - Cloudfront Access Logs -> S3
 
+## Anomaly Detection
+  - Monitoreia y analiza las métricas para determinar anomalias usando algoritmos de ML
+
+
+# Amazon Lookout for Metrics
+
+- Detecta anomalias en las metricas e identifica la causa raiz usando ML
+- Es mucho más completo que CW Anomaly Detection
 
 # EventBridge
 
