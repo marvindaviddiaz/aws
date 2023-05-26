@@ -408,6 +408,16 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - **Integridad de los logs**: Con el siguiente comando podemos ver si un archivo fue alterado ó eliminado
 	`aws cloudtrail validate-logs --trail-arn ... --start-time ... `
 - Para mandar los archivos de Cloudtrail a un S3 de otra cuenta (CrossAccount), hay que modificar el BucketPolicy para permitir escrituras y lecturas de otras cuentas.
+- **EventBridge Integration**:
+	X SERVICIO HACE ALGUNA ACCIÓN  ==>    CLOUDTRAIL   ==>  EVENT BRIDGE
+
+# SQS
+- La DLQ se debe crear manualmente, y asociarla a la cola principal.
+- Reintentos: Después de que **MaximumReceives** es excedido el mensaje se va a un DLQ.
+- El DLQ de una FIFO debe ser también FIFO, El DLQ de un Standard también debe ser Standard
+- Se recomienda tener la retención a 14 días en la DLQ, para temas de DEBUGGING
+- Cuando el código se corrije se debe **Redrive** los mensajes de la DLQ a la Cola normal
+- **A nivel de SNS también se pueden enviar los mensajes fallidos a SQS DDQ**
 
 
 # Kinesis
@@ -495,6 +505,9 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 # EventBridge
 
 - Previamente conocido como CloudWatch Events
+- Permite archivar los eventos (todos/filtrados) para luego poder replicar escenarios fallidos.
+- Permite poder recibir todos los eventos de una organización a una sola cuenta.
+- Los eventos tambien se pueden enviar a Cloudwatch Logs, y se les puede aplicar **Transformations** para modificar el mensaje usando templates.
 - Adicionalmente tiene eventos de Otros Partners (Symantec, Sugar CRM, Datadog...)
 - **CloudTrail Integration**: 
 	Para trabajar con eventos más específicos, se debe seleccionar el Servicio Ej: EC2 y en el tipo de evento se debe 	seleccionar `AWS API Call via CloudTrail` y acá ya podemos usar eventos más específicos como por ej: `CreateImage` (Las operaciones List, Get, Describe no son soportadas por EventBridge). En el ejemplo se creaba una alarma cuando crean un AMI
@@ -504,11 +517,24 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	Forma 2:
 		Hacerlo en EventBridge, pero primero hay que habilitar que CloudTrail grabe los eventos de Data de S3 a nivel de todos los Bucket o solo de alguno es específico. Esto para tener el soporte de Eventos a nivel de Objects de S3
 
+# EC2 Instance Status Checks
+
+- Checks automáticos que identifican problemas de hardware y software.
+- **System Status Checks**: Problemas con AWS, perdidas de energía, problemas físicos. Resolución: Parar  e iniciar la instancia
+- **Instance Status Checks**: Monitorea software y configuraciones de Red en la instancia. Resolución: Reinicia la instancia o cambia la configuración de la misma.
+- Desde EC2 se puede crear una Alarma para notificar cuando estos checks fallan. Además se puede configurar de forma automática si queremos hacer el reboot o recover.
 
 # X-Ray
 
 - **Keywords** para el examen: Traces, Debbuging, Distributed application
 - Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación (Ver link del DevOps Blog)
+- Tambien se puede integrar con Elastic Beanstalk (de forma visual o en el archivo, además se debe verificar que el rol de la aplicación tenga acceso a XRay)
+	`
+	options_settings:
+	  aws:elasticbeanstalk:xray:
+	    XRayEnabled: true`
+- Hay un producto llamado **AWS Distro OpenTelemetry** que es como XRay solo que OpenSource. Pueden enviar a Xray, Prometheus, Third Party Solutions..
+- El CU para usar OpenTelemetry es si queremos estandarizar con OpenSource la Telemetría o si queremos enviar los Traces a multiples destinos simultáneamente.
 
 # Athena
 
