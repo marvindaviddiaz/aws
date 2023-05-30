@@ -1078,6 +1078,17 @@ Netflix "simian-army"
 
 	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3
 
+# AWS Config
+- Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
+- **N previenen que los cambios pasen, pero si se pueden hacer Remediations**
+- Se puede almancer la configuración en S3 para analyzar con Athena
+- Se pueden usar reglas predefinidas o escribir las propias usando Lambda
+- **Configuration Recorder** almacena la configuración de los recursos a travéz del tiempo (se crea automáticamente cuando se habilita Config)
+- Para evitar que desabiliten Config se recomienda usar una SCP a nivel de la organización
+- **Aggregators** centralizan la data de config en todas las cuentas
+- **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
+- **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
+- 
 
 # Control Tower  
 
