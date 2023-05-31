@@ -1100,21 +1100,27 @@ Netflix "simian-army"
 
 - **Account Factory**:	
 	- Usar Service Catalog para aprovisionar las cuentas
-	- Automatiza el aprovisionamiento y despliegue de Cuentas
+	- Automatiza el aprovisionamiento y despliegue de Cuentas usando **Blueprint** (CF)
 	- Útil para crear baselines preaprovados y opciones de configuración para las cuentas (VPC, Subnets, Regions...)
 
 - **Guardarils**:
 	- Provee governance para controlar las cuentas de Control Tower
-	- Preventive: Usando SCPs
-	- Detective: Usando COnfig 
+	- **Preventive**: Usando SCPs
+	- **Detective**: Usando COnfig 
 
-* Ver un video más completo de Control Tower
+- **Landing Zone**: Combinación de AWS Organizacion, Account Factory, OUs, SCPs, IAM Identity Center, Guardrails
+
+- **Customizations for AWS Control Tower CfCT**
+	- Framework creado por AWS para customizar la Landing Zone usando CF y SCPs, usando el estilo GitOps
 
 # AWS IAM Identity Center (Sucesor de AWS Single Sign-On)
 
-- **Un solo login** para todas las Cuentas en una Organización, Aplicaciones de Negocio, Aplicaciones SAML 2.0, Instancias EC2 Windows 
+- **Un solo login** para todas las Cuentas en una Organización, Aplicaciones de Negocio, Aplicaciones SAML 2.0, Instancias EC2 Windows...
 - Se puede integrar con AD, OneLogin, Okta...
 - Por medio de **Permission Set** se limitan los permisos que tendrán los usuarios/grupos de IAM Identity Center.
+- Cuando se usa con Active Directory, primero hay que crear usuarios y grupos en Identity Center exactamente como están en AD.
+- Usa ABAC (permisos usando Tags)
+- Soporta MFA (`Always-On` y `Context-Aware`)
 
 # AWS Tag Editor
 - Permite administrar los tags de múltiples recursos a la vez
