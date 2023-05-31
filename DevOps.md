@@ -909,7 +909,8 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 - La capacidad On-Demand (siempre va a funcionar bien) es mucho más cara que Provisioned. Cuando se selecciona Provisioned se definen los Read/Write Capacity Units ó el mínimo y máximo para escalamiento.
 
 ### DAX: 
-Clúster de Dynamo a nivel de tabla para lecturas intensivas, elegimos el tipo de instancia de los nodos y cuantos queremos, para que la data más accesada se mantenga en memoria.
+- Clúster de Dynamo a nivel de tabla para lecturas intensivas, elegimos el tipo de instancia de los nodos y cuantos queremos, para que la data más accesada se mantenga en memoria.
+- Sube el performance hasta 10x, de milisegundos a microsegundos, inclusive millones de peticiones por segundo.
 
 ### Dynamo Streams
 - Para enviar los eventos de los items a un lambda, se puede configurar para enviar varios al mismo tiempo (batchs), se puede enviar solo las llaves, la nueva, vieja ó ambas versiones del item. Loguea INSERT, UPDATE, DELETE
