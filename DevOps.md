@@ -1165,6 +1165,24 @@ Netflix "simian-army"
 - Automatiza Security Assessments
 - Revisa **Instancias EC2** (Usando ssm agent), **Imagenes ECR** y **Funciones Lambda** contra una BD de vulnerabilidades CVE
 
+# AWS Trusted Advisor
+- Analyza la cuenta y da recomendaciones de 5 categorias: **Optimización de Costos, Performance, Seguridad, Tolerancia a Fallos, Limites de Servicios** 
+- 7 Core Checks en el plan **Basic y Developer**:
+  - S3 Bucket Permisions
+  - Security Groups
+  - IAM Use
+  - MFA root account
+  - EBS Public Snapshot
+  - RDS Public Snapshots
+  - Service Limits
+- Full checks: **Business & Enterprise**
+- Provee RECOMENDACIONES de múltiples servicios según los planes contratados. Ej:
+  - EBS Snapshots, RDS Public Snapshots, S3 bucket Permissions, IAM Ussage, MFA on Root Account, SG
+  - High CPU utilization, Cloudfront Optimization
+  - Cloudformation Stacks, Dynamo DB Reads and Write Capacity, RDS checks, VPC Internet Gateway, EC2 Reserved/OnDemand Leases
+  - LB Optimization, RDS Multi AZ, S3 Bucket Logging and Versioning, Route 53 Record Set Checks
+  - Cost Optimization: Low Usage of EC2, Idle LB, Idle RDS, Saving Plangs, Lambdas with Timeouts 
+
 
 
 
