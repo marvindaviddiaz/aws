@@ -1040,6 +1040,17 @@ Netflix "simian-army"
  - AWS Server Migration Service (SMS)
 		Replicacion Incremental de OnPremise a AWS (en ejecución)
 
+# AWS Config
+- Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
+- **N previenen que los cambios pasen, pero si se pueden hacer Remediations**
+- Se puede almancer la configuración en S3 para analyzar con Athena
+- Se pueden usar reglas predefinidas o escribir las propias usando Lambda
+- **Configuration Recorder** almacena la configuración de los recursos a travéz del tiempo (se crea automáticamente cuando se habilita Config)
+- Para evitar que desabiliten Config se recomienda usar una SCP a nivel de la organización
+- **Aggregators** centralizan la data de config en todas las cuentas
+- **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
+- **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
+
 # AWS ORGANIZATIONS 
 
 - Es un servicio Global
@@ -1048,6 +1059,8 @@ Netflix "simian-army"
 - Se puede habilitar CloudTrail en todas las cuentas para enviar los logs a un S3 Central.
 - Tambien enviar los Cloudwatch Logs a una cuenta central de Logging
 - Las OU agrupan varias cuentas, pueden haber OU adentro de un OU
+- Cuando se crean las cuentas se crea un rol en cada una `OrganizationAccountAccessRole` que es asumido por la master para realizar todo lo que se necesite.
+- Por defecto los descuentos de Instancias Reservadas y Saving Plans son aplicados a toda la organización, hay que desabilitar que sean compartidos, para que solo apliquen a las cuentas que querramos.
 
 ### Service Control Policies - SCP
 
@@ -1065,7 +1078,6 @@ Netflix "simian-army"
 - Quitar la cuenta member de la Org vieja, enviar invitación desde la nueva Org, Aceptar la invitación
 - Si queremos que la Master de la Org vieja se una a la nueva, primero hay que quitar las cuentas Member, y hacer el proceso anterior
 
-
 # Multi Account  
 
 - No hay necesidad de usar IAM Credentials, se hace por STS usando Iam Roles que pueden ser Asumidos en Cross Account
@@ -1077,18 +1089,6 @@ Netflix "simian-army"
 - Para enviar los Cloudwatch logs a una sola cuenta:
 
 	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3
-
-# AWS Config
-- Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
-- **N previenen que los cambios pasen, pero si se pueden hacer Remediations**
-- Se puede almancer la configuración en S3 para analyzar con Athena
-- Se pueden usar reglas predefinidas o escribir las propias usando Lambda
-- **Configuration Recorder** almacena la configuración de los recursos a travéz del tiempo (se crea automáticamente cuando se habilita Config)
-- Para evitar que desabiliten Config se recomienda usar una SCP a nivel de la organización
-- **Aggregators** centralizan la data de config en todas las cuentas
-- **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
-- **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
-- 
 
 # Control Tower  
 
