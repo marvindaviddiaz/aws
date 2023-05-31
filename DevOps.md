@@ -1162,7 +1162,7 @@ Netflix "simian-army"
 - Analyza, investiga e identifica rapidamente la causa raíz de los problemas de seguridad o actividades sospechosas usando ML
 
 # Amazon Inspector
-- Automatiza Security Assessments
+- Automatiza **Security Assessments**
 - Revisa **Instancias EC2** (Usando ssm agent), **Imagenes ECR** y **Funciones Lambda** contra una BD de vulnerabilidades CVE
 
 # AWS Trusted Advisor
