@@ -1139,3 +1139,36 @@ Netflix "simian-army"
 - **Glue Studio** GUI para crear, correr y monitorear Jobs ETL
 - **Glue Streaming ETL** Streaming Jobs usando Apache Spark
 
+# WAF
+- Proteje las aplicaciones web en capa 7 de exploits. Se integra con LB, API Gateway, CloudFront, AppSync (GraphQL Apis)
+- WAF no es para DDos, para esto se usa **AWS Shield Advanced**
+- Tiene reglas Base, específicas para PHP, SQL WOrdpress, badas en reputación de IP, Bots, etc..
+- Se pueden enviar los logs a CW, S3, Kinesis Data Firehose
+- **Tip**: Para validar que solo se acceda a LB a travéz de CloudFront se podría agregar un Custom Header en CloudFront con un secret value y luego crear una regla en WAF para validar dicho header. Por último rotar el secret en SecretsManager y Lambda.
+
+# AWS Firewall Manager
+- Para manejar reglas en toda la organización basadas en Security Policies
+- Security Policies constan de Reglas WAF, AWS Shield Advanced, Security Groups, Network Firewall VPC, Route 53
+
+# GuardDuty
+- Detección de amenazas usando algoritmos de ML. Da 30 días trial
+- Verifica: CloudTrail Logs, VPC Flow Logs, DNS Logs, EKS Audit Logs...
+- **Puebe proteger contra ataques CryptoCurrency**
+- Se pueden manejar múltiples cuentas en GuardDuty
+- Se recomienda integrar EventBridge para reaccionar a los hallazgos de GuardDuty y poder reaccionar usando Lambda. Ej: Bloquear una IP en SecurityGroup ó NACL, etc..
+- **TIP**: Se puede habilitar GuardDuty usando CF template, pero si ya está habilitado dará error el Stack, para este escenario se debe crear un CustomResource usando Lambda, para habilitar GuardDuty si no se encuentra habilitado.
+
+# Amazon Detective
+- Analyza, investiga e identifica rapidamente la causa raíz de los problemas de seguridad o actividades sospechosas usando ML
+
+# Amazon Inspector
+- Automatiza Security Assessments
+- Revisa **Instancias EC2** (Usando ssm agent), **Imagenes ECR** y **Funciones Lambda** contra una BD de vulnerabilidades CVE
+
+
+
+
+
+
+
+
