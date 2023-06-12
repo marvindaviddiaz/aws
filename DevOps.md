@@ -1,8 +1,7 @@
 # CodeCommit
 
 - Para restringir que suban código a master, se debe bloquear a nivel de IAM User con política Deny
-- **CodeCommit Notifications**:  Permite definir notificaciones básicas (para notificaciones y triggers avanzados usar Cloudwatch Events)
-- **CodeCommit Trigger**: Permite Invocar Lambdas desde CodeCommit ( Útiles para revisar credenciales quemadas, Convenciones, etc..)
+- Incluye **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
 
 # CodeBuild (buildspec.yml)
 
