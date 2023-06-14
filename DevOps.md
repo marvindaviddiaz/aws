@@ -3,19 +3,17 @@
 - La política que deben tener los developers es **AWSCodeCommitPowerUser**, y restringir que suban código a master con política Deny
 
 # CodeBuild (buildspec.yml)
-- Al Crear el proyecto se define la imagen a usar para hacer los Builds: AWS Managed Image o Custom Image, así como los recursos y si queremos que corra adentro de una VPC. Lo minimo son 3GB y 2 vCPUs. Las imagenes de AWS son genéricas no incluyen frameworks.
-- El archivo de configuración se compone de: Variables, Fases, Artefactos
-- Dentro del archivo yaml se puede configurar el runtime-version ejemplo: `docker: 18`  si queremos crear y subir imagenes de docker, acá si se pueden usar runtimes de frameworks o lenguajes de programación.
+- En la definición se elige la imagen que hará el Build: Managed (no incluyen frameworks) o Custom, recursos (VPC), etc.. Lo mínimo son 3GB y 2 vCPUs.
+- El archivo de configuración se compone de: Variables, Fases, Artefactos. 
+- En el buildspec.yml se configura el **runtime-version** ejemplo: `docker: 18`, `nodejs: latest`.
 
 # CodeDeploy (appspec.yml)
-- CodeDeploy permite desplegar en EC2/Onpremise, Lambda, ECS
-- Para usar CodeDeploy se debe instalar el **agente de CodeDeploy en las instancias**, crear un bucket para los artefactos y hacer push de los artefactos en ese bucket
+- CodeDeploy permite desplegar en **EC2/Onpremise (con agente CodeDeploy), Lambda, ECS**
 - **Deployments Groups**: Son grupos de instancias ó ASG donde se harán los Deploys, **Si son instancias  se tiene que elegir por medio de Tags**
-- **Hooks**: Pasos de cada etapa del Deploy: ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService, etc..
-- Los Hooks varían según el tipo de la aplicación EC2, Lambda, y  el tipo de Despliegue: BlueGreen, In-place, etc.. 
+- **Hooks**: Pasos de cada etapa del Deploy: **ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService**. Varían según el tipo de aplicación y el tipo de Despliegue: BlueGreen, In-place, etc.. 
 
 ### Deployment Configurations: 
-- Donde se define el tipo de Deployment, para EC2 tenemos los siguientes:
+- Donde se define el tipo de Deployment, **para EC2** tenemos los siguientes:
 	- **In-Place**:
 		- AllAtOnce
 		- OneAtATime
@@ -25,10 +23,12 @@
 		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
 		- En BlueGreen el LB es necesario
 
-- Para lambda existen los siguientes:
+- Para **Lambda y ECS** existen los siguientes:
 	- AllAtOnce, 
 	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
 	- Linear: **EQUALS INCREMENTS** Ej. Mandar incrementos de 10% del tráfico cada 10 minutos (se completaría en 100 minutos ó 10 veces) 
+
+https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html
 
 ### Rollbacks
 - Los rollbacks se pueden hacer manuales ó automáticos, los automáticos pueden ser: 
@@ -36,7 +36,7 @@
  2. Basados en Umbrales de alguna alarma de Cloudwatch (Ej, si el cpu de una nueva instalación sobrepasa el 75% hacer rollback)
 
 ### On premise Instances:
-- Se pueden usar máquinas OnPremises en CodeDeploy, para realizarlo hay dos formas: 1. Creando un IAM User por cada instancia y configurar con aws cli esta forma es ideal cuando hay pocas máquinas OnPremises, y la otra que es más segura y trabajosa es usando un Rol y obteniendo credenciales temporales de STS usando un daemon.
+- Para desplegar OnPremise hay dos formas: 1. Creando un IAM User por cada instancia y configurar con aws cli (forma sencilla, ambiente pequeños), 2. Usando un Rol y obteniendo credenciales temporales de STS usando un daemon (más segura y trabajosa).
 
 # Code Pipeline:
 
