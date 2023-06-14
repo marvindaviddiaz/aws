@@ -1,20 +1,20 @@
-# CodeCommit
+## CodeCommit
 - **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
 - La política que deben tener los developers es **AWSCodeCommitPowerUser**, y restringir que suban código a master con política Deny
 
-# CodeBuild (buildspec.yml)
+## CodeBuild (buildspec.yml)
 - En la definición se elige la imagen que hará el Build: Managed (no incluyen frameworks) o Custom, recursos (VPC), etc.. Lo mínimo son 3GB y 2 vCPUs.
 - El archivo de configuración se compone de: Variables, Fases, Artefactos. 
 - En el buildspec.yml se configura el **runtime-version** ejemplo: `docker: 18`, `nodejs: latest`.
 
-# CodeDeploy (appspec.yml)
+## CodeDeploy (appspec.yml)
 - CodeDeploy permite desplegar en **EC2/Onpremise (con agente CodeDeploy), Lambda, ECS**
 - **Deployments Groups**: Son grupos de instancias ó ASG donde se harán los Deploys, **Si son instancias  se tiene que elegir por medio de Tags**
 - **Hooks**: Pasos de cada etapa del Deploy: **ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService**. Varían según el tipo de aplicación y el tipo de Despliegue: BlueGreen, In-place, etc.. 
 
 ### Deployment Configurations: 
 - Donde se define el tipo de Deployment, **para EC2** tenemos los siguientes:
-	- **In-Place**:
+  	- **In-Place**:
 		- AllAtOnce
 		- OneAtATime
 		- HalfAtATime
@@ -22,7 +22,7 @@
 	- **Blue/Green**:
 		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
 		- En BlueGreen el LB es necesario
-
+		- 
 - Para **Lambda y ECS** existen los siguientes:
 	- AllAtOnce, 
 	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
@@ -36,68 +36,53 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
  2. Basados en Umbrales de alguna alarma de Cloudwatch (Ej, si el cpu de una nueva instalación sobrepasa el 75% hacer rollback)
 
 ### On premise Instances:
-- Para desplegar OnPremise hay dos formas: 1. Creando un IAM User por cada instancia y configurar con aws cli (forma sencilla, ambiente pequeños), 2. Usando un Rol y obteniendo credenciales temporales de STS usando un daemon (más segura y trabajosa).
+- Para desplegar OnPremise hay dos formas: 1. Creando IAM User y configurar con aws cli (forma sencilla, ambiente pequeños), 2. Con Rol y obteniendo credenciales temporales de STS usando un daemon (más segura y trabajosa).
 
-# Code Pipeline:
-
-- Cada etapa del pipeline puede crear Artifacts, los almacena en S3 y es la entrada para la siguiente etapa
+## Code Pipeline:
 - Por cada branch se debe crear un pipeline
-- Para iniciar el pipeline se puede de 2 formas:  Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
-- Los artifacts de CodePipeline son diferentes de los artifacts de CodeBuild
-- Se pueden agregar ManualAprovals dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo pipeline)
-- Cuando un pipeline se define por CF (código), el atributo `runOrder` en los StageAction indica el órden de ejecución.
-- Se puede ejecutar un lambda desde el pipeline y enviar parámetros, Ej. Hacer un Request 200 al sitio web después del deploy
-- `PutJobSuccessResult`, `PutJobFailureResult` para indicar al Pipeline si el Job se ejecutó con éxito o falló
+- Los Artifacts de cada etapa se almacenan en S3 y son la entrada para la siguiente etapa, son diferentes a los Artifacts de CodeBuild
+- Para iniciar el pipeline se puede de 2 formas:  Automático (CloudWatch Events) ó Periódico (CodePipeline Poll)
+- Se pueden agregar **ManualAprovals** dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo pipeline)
+- Cuando un pipeline se define por CF, el atributo `runOrder` en los StageAction indica el órden de ejecución.
+- Se puede ejecutar un lambda desde el pipeline. Con `PutJobSuccessResult`, `PutJobFailureResult` se manda el resultado. Ej. Hacer un Request 200 al sitio web después del deploy, 
 - Un buen CU para CodePipeline es desplegar templates de CloudFormation, también con CF se pueden crear pipelines 
 
-# Code Star:
-
-- Es como Code Pipeline pero con un UI más sencillo y con plantillas definidas por lenguaje de programación y/ó frameworks
-- Tiene un dashboard donde se puede ver los builds, monitoreo, jira, etc..
+## Code Star:
+- Es como CodePipeline pero con un UI más sencillo y con plantillas por lenguaje de programación y/ó frameworks. Tiene dashboardspara ver los builds, monitoreo, jira, etc. En las opciones del proyecto se puede ver toda la configuración asociada: buckets, roles de servicio, CF.. 
 - Por debajo usa CF, CodeCommit, CodeBuild, CodePipeline, según la plantilla que se usó.
-- En las opciones del proyecto de CodeStar se puede configurar y ver todo en el formulario: buckets, roles de servicio, CF.. 
 - A bajo nivel CodeStar está configurado con un CF template.yml usando una transformación `AWS::CodeStar`
 
-# Jenkins:
-
+## Jenkins:
 - Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
-- **EC2 Plugin**: Lanza EC2 para levantar agentes dinámicos.
-- **CodeBuild Plugin**: Usa CodeBuild en lugar de agentes fijos, volviendo un poco serverless la solución.
-- **ECS Plugin**: Usa ECS en lugar de agentes fijos, volviendo un poco serverless la solución.
+- **EC2 Plugin**: Lanza EC2 para usar como Workers.
+- **CodeBuild Plugin**: Usa CodeBuild en lugar de agentes fijos (~serverless).
+- **ECS Plugin**: Usa ECS en lugar de agentes fijos (~serverless).
 
-# Code Artifact
-- Para almacenar dependencias: Maven, Gradle, npm, yarn, pip...
-- Tambien funciona como proxy para los repositorios centrales y almacena una copia.
-- Se le puede dar acceso a otras cuentas por medió de IAM Policies.
+## Code Artifact
+- Para almacenar dependencias: Maven, Gradle, npm, yarn, pip.
+- Tambien funciona como proxy para los repositorios centrales almacenando una copia de los artefactos.
 - **Upsteam Repositories**: Descargar dependencias de un solo endpoint y el Upsteam apuntar hasta a 10 repositorios.
 - Los Domains sirven para agrupar repositorios, lo ideal es que en una sola cuenta este CodeArtifact y por medio de dominios dar acceso a otras cuentas de AWS.
-- En un lambda se puede agregar usando anotaciones (decorator) ó tambien desde la consola de aws.
 
-# Code Guru
-- Automatiza las revisiones de código, usa ML
-- Da 2 funcionalidades: **CodeGuru Reviewer** (analisis estático) y **CodeGuru Profiler** (performance en ejecución)
-- Soporta Java y Python, se integra con Github, Bitbucket, CodeCommit
-- Puede ser usado en aplicaciones corriendo en AWS o OnPremise
+## Code Guru
+- Automatiza las revisiones de código, usa ML. **CodeGuru Reviewer** (analisis estático) y **CodeGuru Profiler** (performance en ejecución)
+- Soporta Java y Python, se integra con Github, Bitbucket, CodeCommit. Puede ser usado en aplicaciones corriendo en AWS o OnPremise
 - **CodeGuru Reviewer Secrets Detector** Usa ML para detectar secrets, passwords, llaves, etc. en el código
 - Cuando se asocia CodeGuru Reviewer con un repositorio de CodeCommit, **automáticamente analyza los pull requests.**
 
-# EC2 Image Builder
-
-- Automatizar la creación, mantenimientoy validación de AMIs o Container Images
-- Puede publicar AMIs a multiples regiones y cuentas
+## EC2 Image Builder
+- Automatizar la creación, mantenimientoy validación de AMIs o Container Images, puede publicar AMIs a multiples regiones y cuentas.
 - Con **AWS RAM** (Resource Access Manager) se pueden compartir Images, Recipes, Components a otras cuentas
-- Después de construir una imagen se recomienda almacenar el AMI ID en SSM Parameter Store, para que los cloudformation tengan siempre la última versión de las AMIs
+- Se recomienda almacenar el AMI ID en SSM Parameter Store, para que los templates de CF tengan siempre la última versión de las AMIs
 
-# AWS Amplify
-
+## AWS Amplify
 -  Se usa para construir aplicaciones Web y Mobile.
 -  Para configurar el Backend ya se integra con varios servicios: S3, Cognito, AppSync, Api Gateway, Sagemaker, Lambda, Dynamo.. (Todo en un solo lugar)
 -  Para el frontend se usan librerias de Amplify para diferentes plataformas: Flutter, Ionic, Next, Angular, React, IOs, Android..
 -  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
 -  Se integra con CodeCommit para tener deployments por branch
 
-# Cloudformation:
-
+## Cloudformation:
 - En CF hay una opción que lleva al Calculator para estimar el costo mensual basado en un template
 - `!FindInMap [MyRegionMap, !Ref "AWS::Region", 32]`
 - Para hacer referencias entre stacks se usan los `Outputs e !ImportValue` respectivamente
@@ -162,7 +147,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- Aunque se puede modificar la política temporalmente para permitir acciones específicas, posiblemente por modificaciones urgentes, pero luego de aplicar la modificación, la política regresa a su estado original con el que fué creada.
 
 
-# Elastic Beanstalk
+## Elastic Beanstalk
 
 - En el exámen pueden preguntar si la BD debe crearse como parte del ambiente de Beanstalk ó por aparte, depende si queremos que la BD forme parte del mismo ciclo de vida de la aplicación de Beanstalk, ya que si queremos conservar la BD aunque se elimine el ambiente lo mejor es crear la BD por separado.
 
@@ -193,7 +178,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- En EB se puedeb crear ambientes de 2 tipos: Web Server, Worker
 	- Este ambiente crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
 
-# AWS CDK - CLOUD DEVELOPMENT KIT
+## AWS CDK - CLOUD DEVELOPMENT KIT
 
 - Sirve para definir infraestructura usando lenguajes de programación: JS, TS, Java y .Net (para no usar Yaml/JsonProducto no disponible en esta tienda)
 - Utiliza componentes de alto nivel llamados **Constructs**
@@ -203,7 +188,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - `cdk bootstrap`, `cdk synth`, `cdk deploy`
 
 
-# LAMBDA
+## LAMBDA
 
 - Trust Relationships (En Roles de IAM): Son los servicios de AWS que pueden asumir un rol.
 - El CPU es asignado acorde a la cantidad de memoria
@@ -242,7 +227,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un VPC Peering y que la política del EFS permita `ClientMount` y `ClientWrite` a la otra cuenta (parte `Principal`) 
 
 
-# API GATEWAY
+## API GATEWAY
 
 - El tipo de EndPoint puede ser Regional (Toda la región), Edge Optimized (Menor latencia usando todas las Edge Locations), 
 	Private (Desplegada dentro de la VPC y para acceder a ella es necesario un VPC Endpoint)
@@ -259,11 +244,11 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Se puede definir el APi usando **Open API** para que AWS valide los request antes de enviarlos a los lambda
 - Con `x-amazon-apigateway-request-validators` se le puede indicar si queremos validar todo, ó solo el body o solo los parámetros
 
-# ECR
+## ECR
 
 - Se pueden crear lyfecycle policies en ECR para borrar imágenes por ejemplo basado en días ó en cantidad de descargas. (viejas o sin utilizar)
 
-# EKS
+## EKS
 - CU: Si la empresa ya esta usando K8s OnPremise o en otra Nube y quiere migrar a AWS
 - Tipos de nodos:
 	- **Managed Node Groups**: Nodos EC2 Manejados por AWS, Usa un ASG, Soporta OnDemand y Spot 
@@ -273,7 +258,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Se puede configurar el ControlPlane para activar el Logging y enviarlo a CloudwatchLogs
 - Pero para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
 
-# ECS
+## ECS
 
 - ECS Clusters es una agrupación logical de instancias EC2
 - Las instancias corren el agente de ECS y usan una AMI especial para ECS, el agente es un contenedor de docker
@@ -327,7 +312,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	 - Con Cloudwatch Events se pueden configurar reglas basadas en los eventos de ECS ej: cuando se termina un container, quiere levantar otra tarea, enviar una alarma, ejecutar un comando, etc..
 
 
-# DMS Database Migration Service
+## DMS Database Migration Service
 
 - Para migrar DBs a hacia AWS / OnPremise, resilient, self healing
 - Migraciones Homogeneas y Heterogeneas
@@ -336,7 +321,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Para hacer la conversión entre diferentes motores se usa el **Schema Conversion Tool SCT** (si se usa el mismo motor no es necesario). Ej:
 	- SQL Server -> Mysql
 
-# AWS Storage Gateway
+## AWS Storage Gateway
 - Es el puente entre la Data OnPremise  y Cloud
 - Para almacenar la data Storage Gateway puede usar: **EBS, S3, Glacier**
 - Los tipos de Storage Gateway son:
@@ -346,7 +331,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Cache Refresh, sirve para que los usuarios en OnPremise vean los archivos que se crearon directamente en un bucket.
 
 
-# OpsWorks
+## OpsWorks
 
 - OpsWorks consta de 3 partes: OpsWorks Stack, OpsWorks for Chef Automate, OpsWorks for Puppet Enterprise
 - Es para las personas que usan Chef OnPremise y luego quieren migrar a la nube y seguir usando Chef
@@ -376,7 +361,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - **Auto Healing**: Si el agente de OpsWork no se puede comunicar con AWS en 5 minutos, la instancia es reiniciada. Con CloudwatchEvents podemos definir una regla para ser notificados cuando esto pase.
 
 
-# CloudTrail
+## CloudTrail
 
 - El trail puede capturar los eventos de todas la regiones
 - CloudTrail envía los archivos a s3 pero también se puede configurar para enviarlos a CloudWatch Logs (Ambos al mismo tiempo)
@@ -397,7 +382,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - **EventBridge Integration**:
 	X SERVICIO HACE ALGUNA ACCIÓN  ==>    CLOUDTRAIL   ==>  EVENT BRIDGE
 
-# SQS
+## SQS
 - La DLQ se debe crear manualmente, y asociarla a la cola principal.
 - Reintentos: Después de que **MaximumReceives** es excedido el mensaje se va a un DLQ.
 - El DLQ de una FIFO debe ser también FIFO, El DLQ de un Standard también debe ser Standard
@@ -406,7 +391,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - **A nivel de SNS también se pueden enviar los mensajes fallidos a SQS DDQ**
 
 
-# Kinesis
+## Kinesis
 
 - Kinesis es una altenativa a Apache Kafka, ideal para BigData en "real-time", IoT, clickstreams
 - La Data es automaticamente replicada a 3 AZ
@@ -431,7 +416,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 		- Fully managed
 
 
-# Cloudwatch
+## Cloudwatch
 
 - La información de las métricas depente del intervalo de tiempo que tengan por ej: 
 	Métricas que se reportan cada minuto la data se almacena por 3 horas, y la que se reporta cada hora está disponible 15 meses.
@@ -447,12 +432,12 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	Desd el punto de vista de devops lo ideal es automatizar el comando anterior, invocar un lambda periódico desde Cloudwatch Rules y en el lambda con el SDK ejecutar el get-metric-statistic y escribir a S3 ó ELASTICSEARCH
 - **TIP**: How to Correlate Data? "Cloudwatch Dashboard"
 
-## Cloudwatch Alarms
+### Cloudwatch Alarms
   - Las acciones de una alarma pueden ser Notificaciones (SNS), AutoScaling, EC2 ACtions, System Manager Action
   - Una Cloudwatch Alarm no puede ser un evento de entrada para un CLoudwatch Events
   - En us-east-1 se puede crear una Billing Alarm, basado en el total estimado ó por servicio
 
-## Cloudwatch Logs
+### Cloudwatch Logs
   - Para configurar la Retención de los Logs se hace a nivel de LogGroup
   - Se pueden obtener metricas y logs de Instancias Onpremise con el CloudWatch Agent
   - El agente tiene un wizard y forma un json que puede ser almacenado en SSM ParameterStore para que las instancias lo bajen de ahí.
@@ -474,21 +459,21 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
     - S3 Access Logs => S3
     - Cloudfront Access Logs -> S3
 
-## Anomaly Detection
+### Anomaly Detection
   - Monitoreia y analiza las métricas para determinar anomalias usando algoritmos de ML
 
-## Synthetics Canary
+### Synthetics Canary
   - Scripts configurables que monitorean APIs, URLs, Websites..
   - Reproducir lo que los clientes hacen en el sitio antes que los clientes sean impactados.
   - Los scripts se escriben en Nodejs o Python
   - Se usa Headless Google Chrome
 
-# Amazon Lookout for Metrics
+## Amazon Lookout for Metrics
 
 - Detecta anomalias en las metricas e identifica la causa raiz usando ML
 - Es mucho más completo que CW Anomaly Detection
 
-# EventBridge
+## EventBridge
 
 - Previamente conocido como CloudWatch Events
 - Permite archivar los eventos (todos/filtrados) para luego poder replicar escenarios fallidos.
@@ -503,14 +488,14 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	Forma 2:
 		Hacerlo en EventBridge, pero primero hay que habilitar que CloudTrail grabe los eventos de Data de S3 a nivel de todos los Bucket o solo de alguno es específico. Esto para tener el soporte de Eventos a nivel de Objects de S3
 
-# EC2 Instance Status Checks
+## EC2 Instance Status Checks
 
 - Checks automáticos que identifican problemas de hardware y software.
 - **System Status Checks**: Problemas con AWS, perdidas de energía, problemas físicos. Resolución: Parar  e iniciar la instancia
 - **Instance Status Checks**: Monitorea software y configuraciones de Red en la instancia. Resolución: Reinicia la instancia o cambia la configuración de la misma.
 - Desde EC2 se puede crear una Alarma para notificar cuando estos checks fallan. Además se puede configurar de forma automática si queremos hacer el reboot o recover.
 
-# X-Ray
+## X-Ray
 
 - **Keywords** para el examen: Traces, Debbuging, Distributed application
 - Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación (Ver link del DevOps Blog)
@@ -522,7 +507,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Hay un producto llamado **AWS Distro OpenTelemetry** que es como XRay solo que OpenSource. Pueden enviar a Xray, Prometheus, Third Party Solutions..
 - El CU para usar OpenTelemetry es si queremos estandarizar con OpenSource la Telemetría o si queremos enviar los Traces a multiples destinos simultáneamente.
 
-# Athena
+## Athena
 
 - **Servicio Serverless de Queries** que permite analizar data almacenada en S3 en SQL
 - Soporta CSV, JSON, ORC, Avro, Parquet
@@ -542,7 +527,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
  - **Federated Query** Permite configurar un Lambda para obtener información de donde sea (ElastcCache, DocumentDB, RDS, Dynamo, Redshift, DB Onpremise) parsearla y almacenarla en S3 para que Athena la use.
 
 
-# SSM
+## SSM
 
 - Ayuda a administrar EC2 y sistemas On-Premise a escala, detectar problemas, parcheo. Funciona para Windows y Linux
 - Servicio gratuito integrado con CloudWatch, AWS Config
@@ -610,7 +595,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	- La configuración se puede almacenar en: Parameter Store / SSM Documents / S3
 
 
-# CONFIG
+## CONFIG
 
 - Util para dar seguimiento a la configuración de todos los recursos de una cuenta
 - Cada regla que se agrega tiene un costo de $1 al mes
@@ -640,7 +625,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 **TIP** Leer a fondo Cloudwatch Events
 
 
-# SERVICE CATALOG
+## SERVICE CATALOG
 
 - Service Catalog es simple y restringe muchas opciones a los usuarios
 - Tareas del Admin: Crear Productos (CF Templates) -> Crear Portfolio (Colección de productos) -> Control IAM Permissions to Porfolios
@@ -649,14 +634,14 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Ayuda a los usuarios a lanzar productos (CF Stacks) sin tener mucho conocimiento
 - Los Output de CF son super importantes porque es la forma en que los usuarios verán los endpoints creados, direcciones, etc..
 
-# INSPECTOR
+## INSPECTOR
 
 - Inspector busca vulnerabilidades por Instancia, Container y Accesibilidad de Red
 - Para hacer un escaneo a una instancia, es necesario que SSM esté activado y las instancias tengan el Rol de 
 	`AmazonSsmRoleForInstancesQuickSetup`
 
 
-# EC2 COMPLIANCE
+## EC2 COMPLIANCE
 
 - Config
 	- Se asegura que la instancia tenga una correcta configuración  (Que no tenga el puerto ssh abierto, etc..)
@@ -679,13 +664,13 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 
 
 
-# PERSONAL HEALTH DASHBOARD
+## PERSONAL HEALTH DASHBOARD
 
 - Se integra con Cloudwatch Events para notificar o realizar acciones en base a los eventos de Health de todos o algunos servicios que afectar a la cuenta.
 - Cuando un AccessKey y SecreteKey son expuestas en un repositorio de Github público, AWS monitorea y envia un evento que puede ser Capturado en CloudwatchEvent y realizar una tarea automatizada. En el ejemplo se llama un StepFunction que elimina las credenciales, hace un query en Cloudtrail para ver que hicieron con esas credenciales, luego notifica por correo electrónico el resultado de cloudtrail.
 
 
-# TRUSTED ADVISOR
+## TRUSTED ADVISOR
 
 - Da recomendaciones para la cuenta, tiene 2 tier, la segunda tiene más recomendaciones y es más cara. Se centra en:
 	- Cost Optimization: Low Utilization EC2 Instances, Idle LB, Underutilized EBS VOlumnes, Unassociated IP Addreses, ...
@@ -707,7 +692,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 
 
 
-# GUARD DUTY
+## GUARD DUTY
 
 - Detecta amenazas de forma inteligente en la Cuenta usando Machine Learning
 - Analiza CLoudTrail Logs, VPC Flow Logs, DNS Logs
@@ -717,7 +702,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Tambien se integra con Cloudwatch Events para automatización, el evento es `GuardDuty Finding`. Es importante hacer estás integraciónes para ser notificados ó tomar accones en tiempo real.
 - 
 
-# MACIE
+## MACIE
 
 - Ayuda a analizar data sensible en S3 y da insights acerda de ella.
 - Analiza si en la data hay:
@@ -728,19 +713,19 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Tiene integración con cuentas externas
 - Se puede customizar varias cosas (extensiones de archivos, expresiones regulares, etc..)
 
-# SECRETS MANAGER
+## SECRETS MANAGER
 
 - La principal diferencia con Parameter Store, es que acá se pueden rotar los secrets y se integra con RDS.
 - $0.40 por secret por mes
 
 
-# LICENSE MANAGER
+## LICENSE MANAGER
 
 - Para manejar el licenciamiento de varios proveedores: Microsoft, Oracle, Sap, etc..
 - Se pueden definir reglas para aumentar el número de licencias.
 - Se pueden asociar AMIs a la reglas, así cuando se lancen instancias de esa AMI, se obtiene una licencia del Pool definido.
 
-# COST ALLOCATION TAGS
+## COST ALLOCATION TAGS
 
 - Son como los Tags, pero se muestran como columnas en los Reportes
 - Tipos de tags: 
@@ -758,7 +743,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 		Para activar estos Tags, de los Tags Normales se seleccionan cuales van a ser tambié nCtostAllocationTag
 
 
-# TIPS
+## TIPS
 
 - Todos los endpoints de AWS exponen HTTPS
 - S3 si tiene un endpoint HTTP, pero no se debería usar
@@ -785,7 +770,7 @@ Encripción de EBS, EFC, RDS, ElasticCache, DynamoDB
 
 
 
-# ASG
+## ASG
 
 - Un ASG puede ser lanzado desde un Launch Configuration (Opción antigua) ó desde Launch Template (Opción moderna)
 - Launch Configuration no maneja versionamiento, Laun template Sí
@@ -881,7 +866,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 
 
 
-# DEPLOYMENTS STRATEGIES (REVIEW)
+## DEPLOYMENTS STRATEGIES (REVIEW)
 
 - In Place 		(1 LB, 1 TG, 1 ASG)	(dowtime, las mismas instancias se actualizan)
 - Rolling  		(1 LB, 1 TG, 1 ASG, nuevas instancias)
@@ -889,7 +874,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 - Blue / Green  (2 LB, 2 TG, 2 ASG, nuevas instancias, R53) (Acá manda el Route 53: Simple / Weighted (Mandar un poco de tráfico primero))
 
 
-# DYNAMO
+## DYNAMO
 
 - Indices Secundarios Locales solo se pueden crear cuando se crea una tabla, después solo se pueden crearn secundarios globales. Además los Locales tiene que tener la misma Llave primaria que la tabla, solo el Sort cambia.
 - La capacidad On-Demand (siempre va a funcionar bien) es mucho más cara que Provisioned. Cuando se selecciona Provisioned se definen los Read/Write Capacity Units ó el mínimo y máximo para escalamiento.
@@ -916,7 +901,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 - Construir un API para buscar Items con:  Dynamo + Dynamo Streams + Lambda + Elastic Search
 
 
-# Multi AZ in AWS
+## Multi AZ in AWS
 
 - Servicios donde Multi-AZ debe ser habilitada manualmente:
 	
@@ -944,7 +929,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 	TIP: Sí un EBS está usando PIOPS, para obtener el máximo performance después del snapshot, se debe leer el volumen entero una vez (pre-warming of IO blocks)
 
 
-# Multi Region Services
+## Multi Region Services
 
 - DynamoDB Global Tables (Active-Active, Habilitado por Streams)
 - AWS Config Aggregators (Multi Región y Multi Cuenta)
@@ -965,7 +950,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 
 Los HealthChecks también ser integran con CW Metrics para enviar alertas, etc..
 
-# Cloudformations StackSets
+## Cloudformations StackSets
 
 - Para desplegar Stacks en múltiples cuentas / regiones
 - Una vez desplegado el StackSet en múltiples regiones ó cuentas se pueden agregar más regiones después.
@@ -976,10 +961,10 @@ Los HealthChecks también ser integran con CW Metrics para enviar alertas, etc..
 	- Habilitar GuardDuty en otra cuenta
 
 
-# Multi Region CodePipeline
+## Multi Region CodePipeline
 - El pipeline debe copiar los artefactos a las diferentes regiones para que así CodeDeploy en diferente región pueda encontrar los artefactos.
 
-# DISASTER RECOVERY 
+## DISASTER RECOVERY 
 
 - **RPO**: Cada cuanto se corren backups
 - **RTO**: Cuando tiempo dura el Downtime
@@ -1014,7 +999,7 @@ CF, EB, Lambda
 -**Chaos Testing**
 Netflix "simian-army"
 
-# On-Premise Strategies with AWS
+## On-Premise Strategies with AWS
 
  - Habilidad de descargar las Linux 2 AMI como VM (.iso format) (Vmware, Kvm, Virtualbox)
  - VM Import / Export
@@ -1027,7 +1012,7 @@ Netflix "simian-army"
  - AWS Server Migration Service (SMS)
 		Replicacion Incremental de OnPremise a AWS (en ejecución)
 
-# AWS Config
+## AWS Config
 - Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
 - **N previenen que los cambios pasen, pero si se pueden hacer Remediations**
 - Se puede almancer la configuración en S3 para analyzar con Athena
@@ -1038,7 +1023,7 @@ Netflix "simian-army"
 - **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
 - **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
 
-# AWS ORGANIZATIONS 
+## AWS ORGANIZATIONS 
 
 - Es un servicio Global
 - La cuenta principal es 'master' y las demas 'members', las members solo pueden pertener a una organización.
@@ -1065,7 +1050,7 @@ Netflix "simian-army"
 - Quitar la cuenta member de la Org vieja, enviar invitación desde la nueva Org, Aceptar la invitación
 - Si queremos que la Master de la Org vieja se una a la nueva, primero hay que quitar las cuentas Member, y hacer el proceso anterior
 
-# Multi Account  
+## Multi Account  
 
 - No hay necesidad de usar IAM Credentials, se hace por STS usando Iam Roles que pueden ser Asumidos en Cross Account
 - CodePeline: puede invocar Codoeploy en otras cuentas
@@ -1077,7 +1062,7 @@ Netflix "simian-army"
 
 	LogGroup 	--->	 ||  	Log Destination 	---> 	Kinesis Firehouse 	---> 	S3
 
-# Control Tower  
+## Control Tower  
 
 - No hay cargos adicionales por usar Control Tower
 - AWS Control Tower runs on top of AWS Organizations
@@ -1100,7 +1085,7 @@ Netflix "simian-army"
 - **Customizations for AWS Control Tower CfCT**
 	- Framework creado por AWS para customizar la Landing Zone usando CF y SCPs, usando el estilo GitOps
 
-# AWS IAM Identity Center (Sucesor de AWS Single Sign-On)
+## AWS IAM Identity Center (Sucesor de AWS Single Sign-On)
 
 - **Un solo login** para todas las Cuentas en una Organización, Aplicaciones de Negocio, Aplicaciones SAML 2.0, Instancias EC2 Windows...
 - Se puede integrar con AD, OneLogin, Okta...
@@ -1109,13 +1094,13 @@ Netflix "simian-army"
 - Usa ABAC (permisos usando Tags)
 - Soporta MFA (`Always-On` y `Context-Aware`)
 
-# AWS Tag Editor
+## AWS Tag Editor
 - Permite administrar los tags de múltiples recursos a la vez
 
-# AWS QuickSight
+## AWS QuickSight
 - Servicio para crear Dashboard de forma Serverless usando ML
 
-# AWS Glue
+## AWS Glue
 - Servicio Serverless Administrado de ETL (Extractm Transform, Load)
 - Útil para preparar y transformar data para analytics
 - CU: Tranformar data en CSV a formato **Parquet** para luego analizarla en Athena de manera más eficiente.
@@ -1126,18 +1111,18 @@ Netflix "simian-army"
 - **Glue Studio** GUI para crear, correr y monitorear Jobs ETL
 - **Glue Streaming ETL** Streaming Jobs usando Apache Spark
 
-# WAF
+## WAF
 - Proteje las aplicaciones web en capa 7 de exploits. Se integra con LB, API Gateway, CloudFront, AppSync (GraphQL Apis)
 - WAF no es para DDos, para esto se usa **AWS Shield Advanced**
 - Tiene reglas Base, específicas para PHP, SQL WOrdpress, badas en reputación de IP, Bots, etc..
 - Se pueden enviar los logs a CW, S3, Kinesis Data Firehose
 - **Tip**: Para validar que solo se acceda a LB a travéz de CloudFront se podría agregar un Custom Header en CloudFront con un secret value y luego crear una regla en WAF para validar dicho header. Por último rotar el secret en SecretsManager y Lambda.
 
-# AWS Firewall Manager
+## AWS Firewall Manager
 - Para manejar reglas en toda la organización basadas en Security Policies
 - Security Policies constan de Reglas WAF, AWS Shield Advanced, Security Groups, Network Firewall VPC, Route 53
 
-# GuardDuty
+## GuardDuty
 - Detección de amenazas usando algoritmos de ML. Da 30 días trial
 - Verifica: CloudTrail Logs, VPC Flow Logs, DNS Logs, EKS Audit Logs...
 - **Puebe proteger contra ataques CryptoCurrency**
@@ -1145,14 +1130,14 @@ Netflix "simian-army"
 - Se recomienda integrar EventBridge para reaccionar a los hallazgos de GuardDuty y poder reaccionar usando Lambda. Ej: Bloquear una IP en SecurityGroup ó NACL, etc..
 - **TIP**: Se puede habilitar GuardDuty usando CF template, pero si ya está habilitado dará error el Stack, para este escenario se debe crear un CustomResource usando Lambda, para habilitar GuardDuty si no se encuentra habilitado.
 
-# Amazon Detective
+## Amazon Detective
 - Analyza, investiga e identifica rapidamente la causa raíz de los problemas de seguridad o actividades sospechosas usando ML
 
-# Amazon Inspector
+## Amazon Inspector
 - Automatiza **Security Assessments**
 - Revisa **Instancias EC2** (Usando ssm agent), **Imagenes ECR** y **Funciones Lambda** contra una BD de vulnerabilidades CVE
 
-# AWS Trusted Advisor
+## AWS Trusted Advisor
 - Analyza la cuenta y da recomendaciones de 5 categorias: **Optimización de Costos, Performance, Seguridad, Tolerancia a Fallos, Limites de Servicios** 
 - 7 Core Checks en el plan **Basic y Developer**:
   - S3 Bucket Permisions
@@ -1169,11 +1154,3 @@ Netflix "simian-army"
   - Cloudformation Stacks, Dynamo DB Reads and Write Capacity, RDS checks, VPC Internet Gateway, EC2 Reserved/OnDemand Leases
   - LB Optimization, RDS Multi AZ, S3 Bucket Logging and Versioning, Route 53 Record Set Checks
   - Cost Optimization: Low Usage of EC2, Idle LB, Idle RDS, Saving Plangs, Lambdas with Timeouts 
-
-
-
-
-
-
-
-
