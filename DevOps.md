@@ -22,7 +22,6 @@
 	- **Blue/Green**:
 		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
 		- En BlueGreen el LB es necesario
-		- 
 - Para **Lambda y ECS** existen los siguientes:
 	- AllAtOnce, 
 	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
@@ -70,200 +69,28 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - **CodeGuru Reviewer Secrets Detector** Usa ML para detectar secrets, passwords, llaves, etc. en el código
 - Cuando se asocia CodeGuru Reviewer con un repositorio de CodeCommit, **automáticamente analyza los pull requests.**
 
+
+## Elastic Beanstalk
+- En EB se puedeb crear ambientes de 2 tipos: Web Server, Worker (Tareas de larga duración ó calendarizadas).
+- Los tipo **Workers** crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
+- Cuando se unsa EB Cli los valores especificados en el comando tiene prioridad a los archivos .ebextensions
+- La BD debe crearse como parte del ambiente de Beanstalk ó por aparte, dependiendo si se quiere que la BD forme parte del mismo ciclo de vida de la aplicación de Beanstalk, ya que si queremos conservar la BD aunque se elimine el ambiente lo mejor es crear la BD por separado.
+
+- **Deployments**
+	1. **All at once**: Es la forma más rápida, pero hay downtime 
+	2. **Rolling**: Pocas instancias a la vez (bucket), luego el siguiente bucket. No hay downtime, la capacidad se reduce mientras se despliega. 2 versiones coexisten durante el despliegue.
+	3. **Rolling With Additional Batches**: Como la anterior solo que se crean nuevas instancias para desplegar el batch, permitiendo operar a la capacidad máxima. 2 versiones coexisten. Al final de actualizar las instancias las que se crearon se borran, bueno para producción, es un poquito más caro que Rolling
+	4. **Inmutable**: Levanta nuevas instancias en un nuevo ASG, desplegar la versión en esas nuevas instancias, luego mete esas instancias al ASG original y finaliza la versión vieja. No hay downtime, Es la opción más cara, En caso de fallas es la más rápida de hacer rollback (solo se finaliza el nuevo ASG), bueno para producción
+	5. **Blue/Green**: No es un feature de Beanstalk, es más trabajo manual: Crea un nuevo ambiente "Stage" y despliega la nueva versión ahí, la nueva versión (green) puede validarse y hacer rollback si no cumple, Luego con Route 53 (Weighted Policies) se le manda un porcentaje pequeño de carga Ej 10%, y al final usando Beanstalk usar la opción "Swap URL" para intercambiar URLs entre ambientes
+
 ## EC2 Image Builder
 - Automatizar la creación, mantenimientoy validación de AMIs o Container Images, puede publicar AMIs a multiples regiones y cuentas.
 - Con **AWS RAM** (Resource Access Manager) se pueden compartir Images, Recipes, Components a otras cuentas
 - Se recomienda almacenar el AMI ID en SSM Parameter Store, para que los templates de CF tengan siempre la última versión de las AMIs
 
-## AWS Amplify
--  Se usa para construir aplicaciones Web y Mobile.
--  Para configurar el Backend ya se integra con varios servicios: S3, Cognito, AppSync, Api Gateway, Sagemaker, Lambda, Dynamo.. (Todo en un solo lugar)
--  Para el frontend se usan librerias de Amplify para diferentes plataformas: Flutter, Ionic, Next, Angular, React, IOs, Android..
--  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
--  Se integra con CodeCommit para tener deployments por branch
-
-## Cloudformation:
-- En CF hay una opción que lleva al Calculator para estimar el costo mensual basado en un template
-- `!FindInMap [MyRegionMap, !Ref "AWS::Region", 32]`
-- Para hacer referencias entre stacks se usan los `Outputs e !ImportValue` respectivamente
-- El log de un script UserData se almacena en `/var/log/cloud-init-output.log`
-- `Fn:Base64` sirve para codificar un string en base64 ideal para el UserData de una EC2
-
-- **cfn-init**: 
-	- Correr scripts de una manera más elegante, EC2 se comunica con CF para bajar los scripts en formato yaml
-	- Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible)
-	- Para llamar cf-init se hace desde el UserData:
-		`/opt/aws/bien/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region}`
-	- Los logs de cfn-init se almacenan en `/var/log/cfn-init.log`
-- **cfn-signal**: 
-	- Para que el template se quede esperando el resultado de cfn-init se usa **`cfn-signal`**
-		`/opt/aws/bien/cfn-signal  -e $? SampleWaitCondition ...`
-- **cfn-hup**: 
-	- Levanta un Daemon en EC2 que se queda escuchando si hay nuevos cambios en la Metadata de EC2
-		`/opt/aws/bincfn-hup ...`
-	- `/etc/cfn/cfn-hup.conf` almacena el nombre del stack y las credenciales para el Daemon 
-	- El Intervalo de chequeo para cambios en la metadata es de 15 minutos, pero se puede cambiar
-	- Ejemplo: Verificar cada 2 minutos si la metadata `CloudFormation::Init` ha tenido cambios, y si ha tenido ejecutar un script
-- **cfn-get-metadata**: Script para obtener la metadata
-
-- En la CREACIÓN del stack por defecto `Onfailure=ROLLBACK`  tambien se puede usar `OnFailure=DO_NOTHING`, para la actualización siempre se hace rollback en caso de fallos
-- Nunca actualizar un Nested Stack directamente, siempre hay que actualizar el Stack Padre.
-
-- **ChangeSet**: Sirve para ver los cambios que se harán a un Stack, luego se pueden aplicar. Para estar más seguro.
-
-- **Deletion Policy**
-	- `DeletionPolicy=Retain` se puede aplicar a cualquier recurso para no borrarlo si se borra el stack
-	- `DeletionPolicy=Snapshot` se puede aplicar a ciertos recursos para sacar Snapshots antes de borrarlos (Backup de la Data)
-	- `DeletionPolicy=Delete` Default para todos los recursos (Excepto RDS::DBCluster que es Snapshot)
-	- Para borrar un Stack que tiene un bucket primero se tiene que borrar el contenido del bucket
-
-- **Termination Protection**: Para prevenir que eliminen el Stack.
-
-- **Parameters from SSM**
-	- Los parámetros del Stack pueden ser de SSM: `Type: AWS::SSM::Parameter::Value<String>`
-	- Si se actualiza el stack usando la misma plantilla y los parámetros de SSM cambiaron, se actualizan los recursos afectados por el cambio de parámetros.
-	- Hay parámetros públicos de AWS que se pueden usar en los template:
-		`'/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'`
-
-- **DependsOn**: Este recurso debe crearse hasta que X recurso se cree primero
-
-- Para desplegar Lambdas en cloudformation, se puede subir el código a S3 y además especificar la versión del Zip de S3 (`S3ObjectVersion`) esto con el fin de que al cambiar el tag versión CF desplegará los cambios ya que el template cambiará
-
-- **Custom Resources**:
-	Se pueden crear recursos custom en cloudformation `Custom::MyCustomResource` que hacen referencias a funciones Lambda. Estas funciones son invocadas cuando ocurren eventos en el Stack de CF como por ejemplo: CREATION, DELETE_IN_PROGRESS, ETC. 
-	En el ejemplo se creó un recurso Custom que hacía referencia a un lambda que limpiaba un bucket cuando el Stack entraba en DELETE_IN_PROGRESS, así CF no daría error de que el Bucket debía estar vacío para borrar el Stack.
-
-- **Drift Detection**:
-	Ayuda a detectar si los recursos creados con el Template aún están igual (IN_SYNC) o no (DRIFTED), muestra las diferencias si no lo estan en una tabla y en formato JSON
-
-- **UPDATE_ROLLBACK_FAILED**: Leer documentación adicional para este estado
-
-- **InsufficientCapabilitiesException**: Cuando no se han puesto los capabilities necesarios. Leer documentacion adicional
-
-- **Stack Policies**:
-	- Son como políticas de IAM donde podemos restringir acciones sobre recursos específicos del Stack
-	- Se especifican en las opciones avanzadas cuando se está creando el Stack
-	- Estas políticas se validan cuando se actualiza el Stack
-	- Aunque se puede modificar la política temporalmente para permitir acciones específicas, posiblemente por modificaciones urgentes, pero luego de aplicar la modificación, la política regresa a su estado original con el que fué creada.
-
-
-## Elastic Beanstalk
-
-- En el exámen pueden preguntar si la BD debe crearse como parte del ambiente de Beanstalk ó por aparte, depende si queremos que la BD forme parte del mismo ciclo de vida de la aplicación de Beanstalk, ya que si queremos conservar la BD aunque se elimine el ambiente lo mejor es crear la BD por separado.
-
-- **Deployments**
-	1. All at once:
-		Es la forma más rápida, pero hay downtime 
-	2. Rolling:
-		Actualizar pocas instancias al mismo tiempo (bucket) y luego actualizar el siguiente bucket una vez el primer bucket está healthy. Acá no hay downtime pero se reduce la capacidad mientras se despliega, el tamaño del bucket se puede setear.
-		También durante el despliegue las 2 versiones coexisten.
-	3. Rolling With Additional Batches:
-		Como la anterior solo que se crean nuevas instancias para desplegar el batch, de este modo las instancias viejas siguen disponibles durante el despliegue permitiendo operar a la capacidad máxima. También se puede setear el tamaño del bucket
-		También durante el despliegue las 2 versiones coexisten. Al final de actualizar las instancias las que se crearon se borran
-		Bueno para producción
-		Como levanta instancias para procesar el batch es un poquito más caro que Rolling
-	4. Inmutable:
-		Levantar nuevas instancias en un nuevo ASG, desplegar la versión en esas nuevas instancias, y luego cuando esas instancias están healthy las mete al ASG original y finaliza la versión vieja
-		Aca no hay downtime
-		Es la opción más cara
-		En caso de fallas es la más rápida de hacer rollback, solo se finaliza el nuevo ASG
-		Bueno para producción
-	5. Blue/Green
-		No es un feature de Beanstalk, es más trabajo manual
-		Lo que busca es que no exista Downtime
-		Crea un nuevo ambiente "Stage" y despliega la nueva versión ahí, la nueva versión (green) puede validarse y hacer rollback si no cumple, Luego con Route 53 (Weighted Policies) se le manda un porcentaje pequeño de carga Ej 10%, y al final usando Beanstalk usar la opción "Swap URL" para intercambiar URLs entre ambientes
-
-- **Workers Environments**
-	- Ambientes en EB que se utilizan para correr tareas de larga duración o calendarizadas. (Encode a video)
-	- En EB se puedeb crear ambientes de 2 tipos: Web Server, Worker
-	- Este ambiente crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
-
-## AWS CDK - CLOUD DEVELOPMENT KIT
-
-- Sirve para definir infraestructura usando lenguajes de programación: JS, TS, Java y .Net (para no usar Yaml/JsonProducto no disponible en esta tienda)
-- Utiliza componentes de alto nivel llamados **Constructs**
-- `const vpc = new ec2.Vpc(this, "MyVpc", {...` 
-- Genera CF por debajo
-- La ventaja de usar código es que los errores aparecen en el IDE, a diferencia de CF Yaml que hay que subir y esperar a que falle
-- `cdk bootstrap`, `cdk synth`, `cdk deploy`
-
-
-## LAMBDA
-
-- Trust Relationships (En Roles de IAM): Son los servicios de AWS que pueden asumir un rol.
-- El CPU es asignado acorde a la cantidad de memoria
-- El tiempo máximo de ejecución es 15 minutos. Si una tarea se tarda más de eso lo mejor sería usar AWS batch
-- Se puede configurar un DLQ para cuando Lambda falla más de 3 veces, solo aplica para funciones asincronas
-- Por defecto son 1000 lambas por 'Reserve Concurrency', se puede incrementar.
-- Por temas de compliance se puede activar el log de las invocaciones en CloudTrail
-- Aperte de Api Gateway tambien se puede integrar directo con ALB (pero se pierden los features de de api gateway, ej. autenticacón)
-- Lambda por si mismo integra KMS para tener variables encriptadas en tránsito, y en la función se debe hacer el decrypt en ejecución, y en 	código ya no es necesario indicar la llave criptográfica porque ya se configuró a nivel de lambda
-	`boto3.client('kms').decrypt((CipheredtextBlob=b64decode(os.environment["DB_USER"])))`
-- Una versión en un lambda engloba el código y la configuración, nada se puede cambiar (Versión = INMUTABLE)
-- Alias es un puntero a una versión (Alias = MUTABLE)
-- A nivel de Alias se puede usar una segunda versión adicional con un % de tráfico asignado.
-	CANARY = TWO STEPS (ej: primero 10%, luego 100%)
-
-	### SAM
-
-	- Para correr la función local:
-		`sam local invoke "HelloWordFunction" - e events/event.json` 
-	- Para levantar el API Local:
-		`sam local start-api` 
-	- Para generar el cloudformation template
-		`sam package ...`
-
-	- SAM se integra con CodeDeploy para poder hacer Canary Deployments, solo es necesario agregar unas líneas a la configuración de la función Lambda. Al hacer esta integración se crea una aplicación en CodeDeploy
-	Utiliza Alias para esta integración, permite CANARY deployments y permite hacer rollback y configurar Alarmas, también permite llamar funciones Hooks para validación del deployment. LEER LINK.
-	
-- Step Function también se puede usar en conjunto con AWS BATCH para orquestar los Jobs cuando son tareas muy largas.
-- Otro caso de uso para Step Functions es para Flujos automatizados inclusive con intervención humana.
-- Los flujos de StepFunctions pueden durar hasta 1 año
-- El Tip para el examen es que StepFunction sirve para orquestrar cosas como flujos
-- A nivel de Cloudwatch Rules se pueden configurar eventos basados en las transiciones y estados de StepFunction
-- En la consola se puede ir viendo las tranciciones en el flujo, el input y output de cada paso, etc..
-
-- **Cross-Account EFS Mounting**:
-Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un VPC Peering y que la política del EFS permita `ClientMount` y `ClientWrite` a la otra cuenta (parte `Principal`) 
-
-
-## API GATEWAY
-
-- El tipo de EndPoint puede ser Regional (Toda la región), Edge Optimized (Menor latencia usando todas las Edge Locations), 
-	Private (Desplegada dentro de la VPC y para acceder a ella es necesario un VPC Endpoint)
-- Api Gateway se puede integrar con Lambda, cualquier endpoint HTTP, Mock, AWS Service, VPC Link
-- Se puede hacer rollback de un Stage ya que el historial se almacena
-- Los Stage se pueden usar para manejar 2 versiones simultaneamente /v1, /v2  
-- Las Stage Variables son como variables de ambiente pero para API Gateway, pueden ser usados en Lambda ARN, HTTP Endpoints, Parameter Mapping Templates, también son pasadas a la función Lambda a travéz del objeto `context`
-- Las Stage Variables se usan comunmente para indicar a que Alias de las funciones lambda llamar.
-- A nivel de Stage se pueden habilitar Canary, y asignarle un porcentaje del tráfico a los nuevos deployment del Stage, luego después de la aceptación se hace Promote al Canary y todo el tráfico se mueve a esa versión del deployment.
-- API Gateway tien eun límite de 10k RPS a nivel de CUENTA (Se puede incrementar), `429 Toomany Requests`
-- Con los 'Usage Plans' se puede limitar el número de RPS para un API Key. Se puede limitar por Segundo, Por Mes, y esta configuración se puede granularizar a nivel de API + Stage + URL + Method.
-- **Tip Examen**: Es posible tener Throttles a nivel de API Gateway, a nivel de Usage Plan y a nivel de Lambda.
-- Usando la integración de `AWS Service` podemos llamar desde API Gateway a un StepFunction, en el json body del Request deben ir 3 propiedades: input (json del step function), name, stateMachineArn. La respuesta es async y nos indica que el Statemachine ha sido iniciado.
-- Se puede definir el APi usando **Open API** para que AWS valide los request antes de enviarlos a los lambda
-- Con `x-amazon-apigateway-request-validators` se le puede indicar si queremos validar todo, ó solo el body o solo los parámetros
-
-## ECR
-
-- Se pueden crear lyfecycle policies en ECR para borrar imágenes por ejemplo basado en días ó en cantidad de descargas. (viejas o sin utilizar)
-
-## EKS
-- CU: Si la empresa ya esta usando K8s OnPremise o en otra Nube y quiere migrar a AWS
-- Tipos de nodos:
-	- **Managed Node Groups**: Nodos EC2 Manejados por AWS, Usa un ASG, Soporta OnDemand y Spot 
-	- **Self-Managed Nodes**: Nodos creados por uno mismo, agregados a un ASG, Soporta OnDemand y Spot
-	- **Fargate**: Serverless
-- Container Storage Interface (CSI) soporta: **EBS, EFS, FSx for Lustre, FSx for NetApp ONTAP**
-- Se puede configurar el ControlPlane para activar el Logging y enviarlo a CloudwatchLogs
-- Pero para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
-
 ## ECS
-
-- ECS Clusters es una agrupación logical de instancias EC2
 - Las instancias corren el agente de ECS y usan una AMI especial para ECS, el agente es un contenedor de docker
-- 1vCPU = 1024 CPU Units in ECS
-- ECS crea automáticamente un grupo de escalamiento para subir la cantidad de nodos
+- ECS crea automáticamente un ASG para subir la cantidad de nodos
 - **ECS Task Definition**: Es metadata en formato JSON que le dice a ECS como correr un Docker Container, No está amarrada al Clúster
 - **TIP**: Si un Task no puede descargar la imagen de ECR, no puede hablar con S3 revisar el `Task Role` que tiene asociado el Task
 - **TIP**: Se puede usar CodeDeploy para hacer Blue/Green Deployments en ECS
@@ -277,180 +104,198 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 	- Para rutear el tráfico de múltiples contenedores y que usan puertos random, ALB usa `Dynamic Port Forwarding` 
 	- No se puede asignar un LB a un ECS Service creado, solo en la creación. Adicional, El LB se crea primero en EC2 y luego se usa en ECS
 
+### Fargate
+- Para escalar solo se incrementa el numero de Task, Simple. Sin aprovisionar servidores
+- No soporta HostPort como al desplegar en EC2.
+- También soporta los Deployments: Rolling Update y Blue/Green
 
-	 ### Fargate
-	 - Amazon lanza Fargate para que no se tengan que aprovisionar EC2, todo queda del lado de amazon y Serverless
-	 - Para escalar solo se incrementa el numero de Task, Simple!
-	 - No soporta HostPort como al desplegar en EC2.
-	 - También soporta los Deployments: Rolling Update y Blue/Green
+### ECS + Beanstalk
+- Se puede correr Elastic Beanstalk en modo Single y Multi Docker Container 
+- Multi Docker ayuda a correr multiples containers por EC2 en EB
+- Por debajo crea: ECS Cluster, EC2 Instances, ASG, LB, Task Defintions
+- Requiere un Dockerrun.aws.json en los fuentes, y la imagen debe ser pre subida en ECR
 
+### Roles en ECS 
+- **Classic**: A las instancias se les asigna un Rol el cuál tiene los permisos para modificar el clúster, descargar imagenes de ECR, etc. Cuando se lanzan Services el Service tiene un TaskDefinition y ese a a su vez tiene un TaskRole, ese TaskRole tiene un TrusRelationship para que solo pueda ser asumido por ECS y es el que va a tener los permisos que necesitan los contenedores /aplicación. 
+- **Fargate**: Cuando se crea un clúster ECS Fargate, como no hay instancias solo se crea el Rol TaskRole. (Más simple)
 
-	 ### ECS + Beanstalk
-	 - Se puede correr Elastic Beanstalk en modo Single y Multi Docker Container 
-	 - Multi Docker ayuda a correr multiples containers por EC2 en EB
-	 - Por debajo crea: ECS Cluster, EC2 Instances, ASG, LB, Task Defintions
-	 - Requiere un Dockerrun.aws.json en los fuentes, y la imagen debe ser pre subida en ECR
+### Autoscaling
+- En ECS se configura a nivel del Servicio, minimo, máximo, Scaling Policy, etc..
+- Hay 2 políticas de autoescalamiento:
+	- **Target Tracking**: Se monitorea en base a una métrica Ej: CPU y en base a eso se incrementan los Task
+	- **Step Scaling**: Basada en una Alarma (CPU, Memoria, etc..)  y en base a eso se incrementan los Task
+- Hay un problema con el autoescalamiento si el clúster es Classic, ya que lo que se incrementa son los Task, y no las instancias. 
+- El escalamiento de ElasticBeansTalk con ECS, si incrementa las instancias y los Task, en fargate no se tiene este problema ya que teoricamente no hay instancias.
 
-	 ### Roles en ECS 
-	 - **Classic**: Cuando se crea un clúster ECS Classic, a las instancias se les asigna un Rol el cuál tiene los permisos para modificar el clúster, descargar imagenes de ECR, etc. Cuando se lanzan Services el Service tiene un TaskDefinition y ese a a su vez tiene un TaskRole, ese TaskRole tiene un TrusRelationship para que solo pueda ser asumido por ECS y es el que va a tener los permisos que necesitan los contenedores /aplicación. 
-	 - **Fargate**: Cuando se crea un clúster ECS Fargate, como no hay instancias solo se crea el Rol TaskRole. (Más simple)
+### Cloudwatch Integration
+- A nivel de Contenedor se puede definir la configuración de Log, se le puede indicar el driver (awslogs, splunk), si es awslogs se pueden enviar directo a Cloudwatch Logs.
+- Si se usan instancias de EC2 entonces se debe instalar el Agente de Clouddatch y enviar los archivos del SO a Cloudwatch Logs por ejemplo `/var/log/docker` 
+- A nivel del cluster de ECS tambien se puede activar el `Cloudwatch Container Insights` para colectar Métricas (CPU, memoria, Disk, etc.. A NIVEL DE CONTENEDOR y enviarlos a Cloudwatch, para utilizarlo en las métricas, dashboard, etc.. (Tiene un costo adicional)
+- Con Cloudwatch Events se pueden configurar reglas basadas en los eventos de ECS ej: cuando se termina un container, quiere levantar otra tarea, enviar una alarma, ejecutar un comando, etc..
 
-	 ### Autoscaling
-	 - En ECS se configura a nivel del Servicio, minimo, máximo, Scaling Policy, etc..
-	 - Hay 2 políticas de autoescalamiento:
-	 	- **Target Tracking**: Se monitorea en base a una métrica Ej: CPU y en base a eso se incrementan los Task
-	 	- **Step Scaling**: Basada en una Alarma (CPU, Memoria, etc..)  y en base a eso se incrementan los Task
-	 	La diferencia en una y otra es que la segunda usa Alarmas.
+## Cloudformation:
+- En CF hay una opción que lleva al Calculator para estimar el costo mensual basado en un template
+- Para hacer referencias entre stacks se usan los `Outputs e !ImportValue` respectivamente
+- Nunca actualizar un Nested Stack directamente, siempre hay que actualizar el Stack Padre.
+- Para borrar un Stack que tiene un bucket primero se tiene que borrar el contenido del bucket
+- Para desplegar Lambdas en cloudformation, se puede subir el código a S3 y además especificar la versión del Zip de S3 (`S3ObjectVersion`) esto con el fin de que al cambiar el tag versión CF desplegará los cambios ya que el template cambiará
+- El log de un script UserData se almacena en `/var/log/cloud-init-output.log`
+- `Fn:Base64` sirve para codificar un string en base64 ideal para el UserData de una EC2
+- `!FindInMap [MyRegionMap, !Ref "AWS::Region", 32]`
 
-	 - Hay un problema con el autoescalamiento si el clúster es Classic, ya que lo que se incrementa son los Task, y no las instancias. 
-	 - El escalamiento de ElasticBeansTalk con ECS, si incrementa las instancias y los Task, en fargate no se tiene este problema ya que teoricamente no hay instancias.
+- **cfn-init**: 
+	- Correr scripts de una manera más elegante, EC2 se comunica con CF para bajar los scripts en formato yaml
+	- Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible)
+	- Para llamar cf-init se hace desde el UserData:
+		`/opt/aws/bien/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region}`
+	- Los logs de cfn-init se almacenan en `/var/log/cfn-init.log`
+- **cfn-signal**: 
+	- Para que el template se quede esperando el resultado de cfn-init se usa **`cfn-signal`**
+		`/opt/aws/bien/cfn-signal  -e $? SampleWaitCondition ...`
+- **cfn-hup**: 
+	- Levanta un Daemon en EC2 que se queda escuchando si hay nuevos cambios en la Metadata de EC2
+		`/opt/aws/bin/cfn-hup ...`
+	- `/etc/cfn/cfn-hup.conf` almacena el nombre del stack y las credenciales para el Daemon 
+	- El Intervalo de chequeo para cambios en la metadata es de 15 minutos, pero se puede cambiar
+	- Ejemplo: Verificar cada 2 minutos si la metadata `CloudFormation::Init` ha tenido cambios, y si ha tenido ejecutar un script
+- **cfn-get-metadata**: Script para obtener la metadata
+- **ChangeSet**: Sirve para ver los cambios que se harán a un Stack, luego se pueden aplicar. Para estar más seguro.
+- **Deletion Policy**: `Retain`, `Snapshot` Backup antes de borrar, `Delete` default para todos los recursos (Excepto RDS::DBCluster que es Snapshot)
+- **Termination Protection**: Para prevenir que eliminen el Stack.
+- **DependsOn**: Este recurso debe crearse hasta que X recurso se cree primero
+- **Parameters from SSM**
+	- Los parámetros del Stack pueden ser de SSM: `Type: AWS::SSM::Parameter::Value<String>`
+	- Si se actualiza el stack usando la misma plantilla y los parámetros de SSM cambiaron, se actualizan los recursos afectados por el cambio de parámetros.
+	- Hay parámetros públicos de AWS que se pueden usar en los template:
+		`'/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'`
+- **Custom Resources**:
+	- `Custom::MyCustomResource` hacen referencia a funciones Lambda. que son invocadas cuando ocurren eventos en el Stack: CREATION, DELETE_IN_PROGRESS, ETC. 
+	- CU: Crear un Custom Resource que hace referencia a un lambda que limpia un bucket cuando el Stack entraba en DELETE_IN_PROGRESS.
+- **Drift Detection**:
+	Ayuda a detectar si los recursos creados con el Template aún están igual (IN_SYNC) o no (DRIFTED), muestra las diferencias si no lo estan en una tabla y en formato JSON
+- **UPDATE_ROLLBACK_FAILED**: https://repost.aws/knowledge-center/cloudformation-update-rollback-failed
+- **InsufficientCapabilitiesException**: Cuando no se han puesto los capabilities necesarios.
+- **Stack Policies**:
+	- Parecidas a las políticas de IAM donde podemos restringir acciones sobre recursos específicos del Stack, estas políticas se validan cuando se actualiza el Stack
+	- Aunque se puede modificar la política temporalmente para permitir acciones específicas, posiblemente por modificaciones urgentes, pero luego de aplicar la modificación, la política regresa a su estado original con el que fué creada.
 
-	 ### Cloudwatch Integration
-	 - A nivel de Contenedor se puede definir la configuración de Log, se le puede indicar el driver (awslogs, splunk), si es awslogs se pueden enviar directo a Cloudwatch Logs.
-	 - Si se usan instancias de EC2 entonces se debe instalar el Agente de Clouddatch y enviar los archivos del SO a Cloudwatch Logs por ejemplo `/var/log/docker` 
-	 - A nivel del cluster de ECS tambien se puede activar el `Cloudwatch Container Insights` para colectar Métricas (CPU, memoria, Disk, etc.. A NIVEL DE CONTENEDOR y enviarlos a Cloudwatch, para utilizarlo en las métricas, dashboard, etc.. (Tiene un costo adicional)
-	 - Con Cloudwatch Events se pueden configurar reglas basadas en los eventos de ECS ej: cuando se termina un container, quiere levantar otra tarea, enviar una alarma, ejecutar un comando, etc..
+## AWS CDK - CLOUD DEVELOPMENT KIT
+- Sirve para definir infraestructura usando lenguajes de programación: JS, TS, Java y .Net (para no usar Yaml/Json), Genera CF por debajo
+- Utiliza componentes de alto nivel llamados **Constructs** `const vpc = new ec2.Vpc(this, "MyVpc", {...` 
+- La ventaja de usar código es que los errores aparecen en el IDE, a diferencia de CF Yaml que hay que subir y esperar a que falle
 
+## LAMBDA
+- El tiempo máximo de ejecución es 15 minutos. Si una tarea se tarda más de eso lo mejor sería usar AWS batch
+- Para funciones asincronas: Se puede configurar un DLQ para cuando Lambda falla más de 3 veces
+- Por defecto son 1000 lambas por 'Reserve Concurrency', se puede incrementar.
+- Por temas de compliance se puede activar el log de las invocaciones en CloudTrail
+- Aparte de Api Gateway tambien se puede integrar directo con ALB (pero se pierden los features de de api gateway, ej. autenticacón)
+- Lambda por si mismo integra KMS para tener variables encriptadas en tránsito, y en la función se debe hacer el decrypt en ejecución, y en código ya no es necesario indicar la llave criptográfica porque ya se configuró a nivel de lambda
+	`boto3.client('kms').decrypt((CipheredtextBlob=b64decode(os.environment["DB_USER"])))`
+- **Cross-Account EFS Mounting**: Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un VPC Peering y que la política del EFS permita `ClientMount` y `ClientWrite` a la otra cuenta (parte `Principal`) 
+- Una versión en un lambda engloba el código y la configuración, nada se puede cambiar (Versión = INMUTABLE)
+- Alias es un puntero a una versión (Alias = MUTABLE)
+- A nivel de Alias se puede usar una segunda versión adicional con un % de tráfico asignado.
+	CANARY = TWO STEPS (ej: primero 10%, luego 100%)
+### SAM
+- Permite correr la fución local: `sam local invoke "HelloWordFunction" - e events/event.json`, Levantar el API Local: `sam local start-api` 
+- SAM se integra con CodeDeploy para poder hacer Canary Deployments, es necesario agregar unas líneas a la configuración de la función. Al hacerlo se crea una aplicación en CodeDeploy usando Alias, permite hacer rollback y configurar Alarmas, también permite llamar funciones Hooks para validación del deployment.
 
-## DMS Database Migration Service
+### Step Functions
+- Para **Orquestar Flujos** incluyendo intervención humana, pueden durar hasta 1 año.
+- Step Function también se puede usar en conjunto con AWS BATCH para orquestar los Jobs cuando son tareas muy largas.
+- En la consola se puede ir viendo las tranciciones en el flujo, el input y output de cada paso, etc..
 
-- Para migrar DBs a hacia AWS / OnPremise, resilient, self healing
-- Migraciones Homogeneas y Heterogeneas
-- La tarea de migración se ejecuta en una EC2
-- Como Source y Target se puede usar RDS, S3, DocumentDB, OpenSearch, Redshift, Kafka, Neptune, Redis... 
-- Para hacer la conversión entre diferentes motores se usa el **Schema Conversion Tool SCT** (si se usa el mismo motor no es necesario). Ej:
-	- SQL Server -> Mysql
-
-## AWS Storage Gateway
-- Es el puente entre la Data OnPremise  y Cloud
-- Para almacenar la data Storage Gateway puede usar: **EBS, S3, Glacier**
-- Los tipos de Storage Gateway son:
-	- File Gateway
-	- Volume Gateway
-	- Tape Gateway
-- Cache Refresh, sirve para que los usuarios en OnPremise vean los archivos que se crearon directamente en un bucket.
-
+## API GATEWAY
+- El tipo de EndPoint puede ser **Regional** (Toda la región), **Edge Optimized** (Menor latencia usando todas las Edge Locations),  **Private** (en la VPC usando un VPC Endpoint)
+- Api Gateway se puede integrar con Lambda, cualquier endpoint HTTP, Mock, AWS Service, VPC Link
+- Los Stage se pueden usar para manejar 2 versiones simultaneamente /v1, /v2. Se puede hacer rollback de un Stage ya que el historial se almacena
+- Las Stage Variables son como variables de ambiente pero para API Gateway, pueden ser usados en Lambda ARN, HTTP Endpoints, Parameter Mapping Templates, también son pasadas a la función Lambda a travéz del objeto `context`. Se usan comunmente para indicar a que Alias de las funciones lambda llamar.
+- A nivel de Stage se pueden habilitar Canary, y asignarle un porcentaje del tráfico a los nuevos deployment del Stage, luego después de la aceptación se hace Promote al Canary y todo el tráfico se mueve a esa versión del deployment.
+- API Gateway tiene un límite de 10k RPS a nivel de CUENTA (Se puede incrementar), `429 Too many Requests`
+- Con los **Usage Plans** se puede limitar el número de RPS para un API Key. Se puede limitar por Segundo, Por Mes. Se puede granularizar a nivel de API + Stage + URL + Method.
+- **Tip**: Es posible tener Throttles a nivel de API Gateway, a nivel de Usage Plan y a nivel de Lambda.
+- Desde API Gateway se puede invocar a un StepFunction de forma asíncrona. solo hay que mandar la estructura del json requerido por StepFunction.
+- Se puede definir el API usando **Open API** para que AWS valide los request antes de enviarlos a los lambda. Con `x-amazon-apigateway-request-validators` se le puede indicar si queremos validar todo, ó solo el body o solo los parámetros
 
 ## OpsWorks
-
 - OpsWorks consta de 3 partes: OpsWorks Stack, OpsWorks for Chef Automate, OpsWorks for Puppet Enterprise
 - Es para las personas que usan Chef OnPremise y luego quieren migrar a la nube y seguir usando Chef
 - Un Stack es un grupo de Layers, Instaces and AWS Resources.
-- Los tipos de Layers que se pueden crear son: 
-	- Opsworks
-	- ECS
-	- RDS
-- Para iniciar se utiliza Chef cookbooks
+- Los tipos de Layers que se pueden crear son: **Opsworks, ECS, RDS**
+- **Auto Healing**: Si el agente de OpsWork no se puede comunicar con AWS en 5 minutos, la instancia es reiniciada. Con CloudwatchEvents podemos definir una regla para ser notificados.
 - Tipos de instancias:
-	24x7: Instancia Normal
-	Time: Permite definir horarios para levantar y bajar las instancias en base semanal.
-	Load: Estas se levantan o bajan automaticamente en base a la carga (CPU, memoria, etc..) Como Autoescale pero no tan flexible
+	- **24x7**: Instancia Normal
+	- **Time**: Permite definir horarios para levantar y bajar las instancias en base semanal.
+	- **Load**: Estas se levantan o bajan automaticamente en base a la carga (CPU, memoria, etc..) Como Autoescale pero no tan flexible
 - **Apps**: Aplicaciones que se encuentran en repositorios GIT o Http y contienen los Cheef Cookbook
 - Se pueden crear Deployments en las instancias utilizando las Apps.
 - **TIP**: AWS OpsWorks Stack Lifecycle Events:
    Cada Layer tiene un set de 5 Lifecycle Events, cada uno tiene asociado un set de Recipes. Los eventos son:
-
+   
    1. Setup    : Cuando la instancia ha terminado de bootear
    2. Configure: Cuando la instancia entra o sale "En Línea", Asocia o Desasocia una IP a una instancia, Attach o Detach un ELB a un Layer.
    3. Deploy   : Cuando se despliega la aplicación a un sert de instancias.    
    4. Undeploy : Cuando se hace undeploy o se borra la aplicación de un grupo de instancias
    5. Shutdown : Antes de Terminate la instancia EC2
-
    De los 5 eventos "Configure" es el único que cuando ocurre afecta a TODAS las instancias del Stack.
 
-- **Auto Healing**: Si el agente de OpsWork no se puede comunicar con AWS en 5 minutos, la instancia es reiniciada. Con CloudwatchEvents podemos definir una regla para ser notificados cuando esto pase.
-
-
 ## CloudTrail
-
-- El trail puede capturar los eventos de todas la regiones
-- CloudTrail envía los archivos a s3 pero también se puede configurar para enviarlos a CloudWatch Logs (Ambos al mismo tiempo)
-- Al integrarlo a CloudWatch Logs se pueden crear métricas
-- Por defecto los archivos se encriptan usando SSE-S3
-- Estructura del Log:
-	- `userIdentity`: Quién hizo el request
-	- `eventTime`: Cuándo
-	- `eventSource`: Dónde
-	- `eventName`: Qué
-	- `requestParameters`: Parámetros adicionales
-	- `responseElements`: Respuesta
-- Puede haber un Delay de hasta 15 minutos por parte de CloudTrail, para eventos en tiempo Real se recomienda usar Cloudwatch Events
+- El trail **puede** capturar los eventos de todas la regiones
+- CloudTrail envía los archivos a S3 (SSE-S3) pero también se puede configurar para enviarlos a CloudWatch Logs (Ambos al mismo tiempo)
+- Estructura del Log: `userIdentity`, `eventTime`, `eventSource`, `eventName`, `requestParameters`, `responseElements`
+- Puede haber un Delay de hasta 15 minutos por parte de CloudTrail, **para eventos en tiempo Real se recomienda usar Cloudwatch Events**
 - El digest de los archivos aparece cada hora
-- **Integridad de los logs**: Con el siguiente comando podemos ver si un archivo fue alterado ó eliminado
-	`aws cloudtrail validate-logs --trail-arn ... --start-time ... `
+- **Integridad de los logs**: `aws cloudtrail validate-logs --trail-arn ... --start-time ... `
 - Para mandar los archivos de Cloudtrail a un S3 de otra cuenta (CrossAccount), hay que modificar el BucketPolicy para permitir escrituras y lecturas de otras cuentas.
+- **CloudTrail supports much more events than the events that are sent by AWS services to EventBridge.**
 - **EventBridge Integration**:
 	X SERVICIO HACE ALGUNA ACCIÓN  ==>    CLOUDTRAIL   ==>  EVENT BRIDGE
+- https://tusharf5.com/posts/aws-eventbridge/
 
 ## SQS
-- La DLQ se debe crear manualmente, y asociarla a la cola principal.
-- Reintentos: Después de que **MaximumReceives** es excedido el mensaje se va a un DLQ.
+- Reintentos: Después de que **MaximumReceives** es excedido el mensaje se va a un DLQ. La DLQ se debe crear manualmente, y asociarla a la cola principal.
 - El DLQ de una FIFO debe ser también FIFO, El DLQ de un Standard también debe ser Standard
 - Se recomienda tener la retención a 14 días en la DLQ, para temas de DEBUGGING
 - Cuando el código se corrije se debe **Redrive** los mensajes de la DLQ a la Cola normal
-- **A nivel de SNS también se pueden enviar los mensajes fallidos a SQS DDQ**
+- **A nivel de SNS también se pueden enviar los mensajes fallidos a SQS DLQ**
 
-
-## Kinesis
-
-- Kinesis es una altenativa a Apache Kafka, ideal para BigData en "real-time", IoT, clickstreams
-- La Data es automaticamente replicada a 3 AZ
-- Hay 3 servicios asociados a Kinesis:
-	- **Streams**:   streaming de ingesta de baja latencia a gran escala
-	- **Analytycs**: Analisis en tiempo real de Streams usando SQL 
-	- **Firehose**: Carga de Streams hacia S3, Redshift, ElasticSearch, Splunk...
-
-- El Producer puede enviar 1 MB/s ó 1,000 mensajes de escritura POR SHARD, si no se obtiene `ProvisionedThroughputException`
-- El Consumer puede leer 2 MB/s en lectura por SHARD en todos los consumers
-- 24 Horas de retención de data por defecto, puede ser extendida a 7 días
-
-	**Kinesis Producers**: Kinesis SDK, Kinesis Producer Library KPL, Kinesis Agent, CLoudwatch Logs, Terceros (Spark, Log4j Appenders, 					Flume, Kafka Connect, )
-	**Kinesis Consumers**: Kinesis SDK, Kinesis Client Library KCL, Kinesis Connector LIbrary, Kinesis Firehose, AWS Lambda
-						Terceros (Spark, Log4j Appenders, Flume, Kafka Connect)
-- **TIP**:  
-	- Kinesis Streams
-		- Tiempo Real
-		- Custom Code (producer / consumer)
-	- Firehose
-		- Casi Tiempo Real
-		- Fully managed
-
+## EventBridge
+- Permite archivar los eventos (todos/filtrados) para luego poder replicar escenarios fallidos.
+- Permite poder recibir todos los eventos de una organización a una sola cuenta.
+- Los eventos tambien se pueden enviar a Cloudwatch Logs, y se les puede aplicar **Transformations** para modificar el mensaje usando templates.
+- Adicionalmente tiene eventos de Otros Partners (Symantec, Sugar CRM, Datadog...)
+- **CloudTrail Integration**: 
+	Para trabajar con eventos más específicos, se debe seleccionar el Servicio Ej: EC2 y en el tipo de evento se debe seleccionar `AWS API Call via CloudTrail` y acá ya podemos usar eventos más específicos como por ej: `CreateImage` (Las operaciones List, Get, Describe no son soportadas por EventBridge). En el ejemplo se creaba una alarma cuando crean un AMI
+- **S3 Integration**:
+	- Forma 1: Dentro de S3 en Opciones Avanzadas está la opción de Events, podemos elegir que eventos serán los disparadores (PUT, COPY, Delete, ect..) y luego "Send To" que permite llamar a SNS, SQS, Lambda. En esta forma no todos los eventos de S3 están soportados.
+	- Forma 2: Hacerlo en EventBridge, pero primero hay que habilitar que CloudTrail grabe los eventos de Data de S3 a nivel de todos los Bucket o solo de alguno es específico. Esto para tener el soporte de Eventos a nivel de Objects de S3
 
 ## Cloudwatch
-
-- La información de las métricas depente del intervalo de tiempo que tengan por ej: 
-	Métricas que se reportan cada minuto la data se almacena por 3 horas, y la que se reporta cada hora está disponible 15 meses.
-- RAM, Espacio en Disco, y Número de procesos, son métricas que solo se obtienen al usar Custom Metrics ó el Agente de Cloudwatch
+- La información de las métricas depente del intervalo de tiempo que tengan por ej: Métricas que se reportan cada minuto la data se almacena por 3 horas, y la que se reporta cada hora está disponible 15 meses.
+- **RAM, Espacio en Disco, y Número de procesos,** son métricas que solo se obtienen al usar Custom Metrics ó el Agente de Cloudwatch
+- Métricas que se obtienen con el agente: cpu, disk, space, io, ram, network, processes, swap
 - A nivel ASG se pueden activar "Group Metrics" para ver métricas de EC2 agrupadas por ASG
-- En las categorías de las métricas ej: "EC2" se puede dar a la opción "Automatic Dashbaord" crea un dashboard las métricas importantes
-- **Custom Metrics**
-	Standard Resolution: 1 minuto de granularidad.  (Las métricas de AWS son Standard Resolution por Default)
-	High Resolution: : 1 segundo de granularidad
+- En las categorías de las métricas ej: "EC2" se puede dar a la opción "Automatic Dashbaord" crea un dashboard las métricas importantes, las métricas se pueden exportar.
+- Metrics **Standard Resolution**: 1 minuto de granularidad. **High Resolution**: 1 segundo de granularidad
 	`aws cloudwatch put-metric-data --metric-name FunnyMetric --namespace Custom --value 123 --dimensions InstanceId=1123,...`
-- **Exportar Métricas**:
-	`aws cloudwatch get-metric-statistics --dimensions --start-time --end-time ...`
-	Desd el punto de vista de devops lo ideal es automatizar el comando anterior, invocar un lambda periódico desde Cloudwatch Rules y en el lambda con el SDK ejecutar el get-metric-statistic y escribir a S3 ó ELASTICSEARCH
 - **TIP**: How to Correlate Data? "Cloudwatch Dashboard"
-
+- Se pueden obtener metricas y logs de Instancias Onpremise con el CloudWatch Agent
 ### Cloudwatch Alarms
   - Las acciones de una alarma pueden ser Notificaciones (SNS), AutoScaling, EC2 ACtions, System Manager Action
   - Una Cloudwatch Alarm no puede ser un evento de entrada para un CLoudwatch Events
   - En us-east-1 se puede crear una Billing Alarm, basado en el total estimado ó por servicio
-
 ### Cloudwatch Logs
   - Para configurar la Retención de los Logs se hace a nivel de LogGroup
-  - Se pueden obtener metricas y logs de Instancias Onpremise con el CloudWatch Agent
   - El agente tiene un wizard y forma un json que puede ser almacenado en SSM ParameterStore para que las instancias lo bajen de ahí.
-  - Métricas que se obtienen con el agente:
-	cpu, disk, space, io, ram, network, processes, swap
-  - **Metric Filter**, sirve para buscar coincidencias en Cloudwatch Logs.
-  - De un MetricFilter se puede crear un Metric y del Metric un MetricAlarm
+  - **Metric Filter**, sirve para buscar coincidencias en Cloudwatch Logs. De un MetricFilter se puede crear un Metric y del Metric un MetricAlarm
   - Se puede exportar data de Cloudwatch Logs a S3, se selecciona el Log Group y se puede filtrar por fechas ó Stream, y el bucket puede ser CrossAccount.
 	Se puede automatizar desde Cloudwatch Events, creando una Regla Periódica y llamando a un lambda
   - Por medio de la opción de "Subscription" se pueden analizar los logs en tiempo real usando:
   	 - Kinesis Stream, Firehose
   	 - Lambda
   	 - OpenSearch
+
   - **AWS Managed Logs**:
     - Cloudtrail Logs => S3 y CWL
     - VPC Flow Logs =>  S3 y CWL
@@ -459,34 +304,18 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
     - S3 Access Logs => S3
     - Cloudfront Access Logs -> S3
 
-### Anomaly Detection
-  - Monitoreia y analiza las métricas para determinar anomalias usando algoritmos de ML
-
 ### Synthetics Canary
   - Scripts configurables que monitorean APIs, URLs, Websites..
   - Reproducir lo que los clientes hacen en el sitio antes que los clientes sean impactados.
   - Los scripts se escriben en Nodejs o Python
   - Se usa Headless Google Chrome
 
-## Amazon Lookout for Metrics
+### Anomaly Detection
+  - Monitorea y analiza las métricas para determinar anomalias usando algoritmos de ML
 
+## Amazon Lookout for Metrics
 - Detecta anomalias en las metricas e identifica la causa raiz usando ML
 - Es mucho más completo que CW Anomaly Detection
-
-## EventBridge
-
-- Previamente conocido como CloudWatch Events
-- Permite archivar los eventos (todos/filtrados) para luego poder replicar escenarios fallidos.
-- Permite poder recibir todos los eventos de una organización a una sola cuenta.
-- Los eventos tambien se pueden enviar a Cloudwatch Logs, y se les puede aplicar **Transformations** para modificar el mensaje usando templates.
-- Adicionalmente tiene eventos de Otros Partners (Symantec, Sugar CRM, Datadog...)
-- **CloudTrail Integration**: 
-	Para trabajar con eventos más específicos, se debe seleccionar el Servicio Ej: EC2 y en el tipo de evento se debe 	seleccionar `AWS API Call via CloudTrail` y acá ya podemos usar eventos más específicos como por ej: `CreateImage` (Las operaciones List, Get, Describe no son soportadas por EventBridge). En el ejemplo se creaba una alarma cuando crean un AMI
-- **S3 Integration**:
-	Forma 1:
-		Dentro de S3 en Opciones Avanzadas está la opción de Events, podemos elegir que eventos serán los disparadores (PUT, COPY, Delete, ect..) y luego "Send To" que permite llamar a SNS, SQS, Lambda. En esta forma no todos los eventos de S3 están soportados.
-	Forma 2:
-		Hacerlo en EventBridge, pero primero hay que habilitar que CloudTrail grabe los eventos de Data de S3 a nivel de todos los Bucket o solo de alguno es específico. Esto para tener el soporte de Eventos a nivel de Objects de S3
 
 ## EC2 Instance Status Checks
 
@@ -496,11 +325,9 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Desde EC2 se puede crear una Alarma para notificar cuando estos checks fallan. Además se puede configurar de forma automática si queremos hacer el reboot o recover.
 
 ## X-Ray
-
 - **Keywords** para el examen: Traces, Debbuging, Distributed application
-- Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación (Ver link del DevOps Blog)
+- Se puede automatizar con Lambda la detección de latencia, errores, etc, en una aplicación.
 - Tambien se puede integrar con Elastic Beanstalk (de forma visual o en el archivo, además se debe verificar que el rol de la aplicación tenga acceso a XRay)
-	`
 	options_settings:
 	  aws:elasticbeanstalk:xray:
 	    XRayEnabled: true`
@@ -508,7 +335,6 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - El CU para usar OpenTelemetry es si queremos estandarizar con OpenSource la Telemetría o si queremos enviar los Traces a multiples destinos simultáneamente.
 
 ## Athena
-
 - **Servicio Serverless de Queries** que permite analizar data almacenada en S3 en SQL
 - Soporta CSV, JSON, ORC, Avro, Parquet
 - $5 por TB scaneado
@@ -526,9 +352,7 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
   - **Usar archivos mayores** a 128MB para minimizar overhead	
  - **Federated Query** Permite configurar un Lambda para obtener información de donde sea (ElastcCache, DocumentDB, RDS, Dynamo, Redshift, DB Onpremise) parsearla y almacenarla en S3 para que Athena la use.
 
-
 ## SSM
-
 - Ayuda a administrar EC2 y sistemas On-Premise a escala, detectar problemas, parcheo. Funciona para Windows y Linux
 - Servicio gratuito integrado con CloudWatch, AWS Config
 - El agente viene por defecto instalado en las Linux AMI y Ubuntu AMI
@@ -596,7 +420,6 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 
 
 ## CONFIG
-
 - Util para dar seguimiento a la configuración de todos los recursos de una cuenta
 - Cada regla que se agrega tiene un costo de $1 al mes
 - Las reglas se pueden validar siempre que hayan cambios o de forma periódica
@@ -621,8 +444,6 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 		 Múltiples cuentas y multiples regiones, 
 		 Una cuentas multiples regiones, 
 		 Una Organization y todas las cuentas de esa organización, 
-
-**TIP** Leer a fondo Cloudwatch Events
 
 
 ## SERVICE CATALOG
@@ -673,11 +494,11 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 ## TRUSTED ADVISOR
 
 - Da recomendaciones para la cuenta, tiene 2 tier, la segunda tiene más recomendaciones y es más cara. Se centra en:
-	- Cost Optimization: Low Utilization EC2 Instances, Idle LB, Underutilized EBS VOlumnes, Unassociated IP Addreses, ...
-	- Performance: Alta utilización de Instancias, EBS Volumnes..
-	- Security: MFA en root, Security Groups, Public Snapshots, S3 Permissions, IAM Access Key Rotation 
-	- Faul Tolerance: Chequea la edad de los Snapshots, Optimización de LB, Redundancia de Tunel de VPN, RDS Backups...
-	- Service Limits: Chequea cuando el se llega al 80% de los límites de varios servicios
+	- **Cost Optimization**: Low Utilization EC2 Instances, Idle LB, Underutilized EBS VOlumnes, Unassociated IP Addreses, ...
+	- **Performance**: Alta utilización de Instancias, EBS Volumnes..
+	- **Security**: MFA en root, Security Groups, Public Snapshots, S3 Permissions, IAM Access Key Rotation 
+	- **Faul Tolerance**: Chequea la edad de los Snapshots, Optimización de LB, Redundancia de Tunel de VPN, RDS Backups...
+	- **Service Limits**: Chequea cuando el se llega al 80% de los límites de varios servicios
 - Tambien se puede integrar con Cloudwatch Events, para detecta y reaccionar a los cambios de estado de los Checks de Trusted Advisor. CUs:
 	- Enviar una notificación a Slack cuando hay un cambio de estado en el Check
 	- Push Data sobre los Checks hacia Kinesis Stream para monitoreo en tiempo real.
@@ -690,20 +511,15 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Cuando se paga soporte Business ó Entreprise,  en Cloudwatch aparecen más Metricas de Trusted Advisor
 - Por defecto TrustedAdvisor se refresca varias veces al día, pero se puede automatizar y tener un proceso para que cada 5 minutos esté ejecutando el `refresh-trusted-advisor-check` y para consultar el `describe-trusted-advisor-check-result`
 
-
-
 ## GUARD DUTY
-
 - Detecta amenazas de forma inteligente en la Cuenta usando Machine Learning
 - Analiza CLoudTrail Logs, VPC Flow Logs, DNS Logs
 - Notifica en cazo de algún hallazgo y se integra con AWS Lambda
 - Puede detectar si una instancia está minando Bitcoin
 - Detecta Ataques de fuerza bruta
 - Tambien se integra con Cloudwatch Events para automatización, el evento es `GuardDuty Finding`. Es importante hacer estás integraciónes para ser notificados ó tomar accones en tiempo real.
-- 
 
 ## MACIE
-
 - Ayuda a analizar data sensible en S3 y da insights acerda de ella.
 - Analiza si en la data hay:
 	Private Keys (DSA, EC, PGP, RSA) 
@@ -714,61 +530,30 @@ Para que un Lambda en otra cuenta pueda montar un EFS es necesario establecer un
 - Se puede customizar varias cosas (extensiones de archivos, expresiones regulares, etc..)
 
 ## SECRETS MANAGER
-
 - La principal diferencia con Parameter Store, es que acá se pueden rotar los secrets y se integra con RDS.
 - $0.40 por secret por mes
 
-
 ## LICENSE MANAGER
-
 - Para manejar el licenciamiento de varios proveedores: Microsoft, Oracle, Sap, etc..
 - Se pueden definir reglas para aumentar el número de licencias.
 - Se pueden asociar AMIs a la reglas, así cuando se lancen instancias de esa AMI, se obtiene una licencia del Pool definido.
 
 ## COST ALLOCATION TAGS
-
 - Son como los Tags, pero se muestran como columnas en los Reportes
-- Tipos de tags: 
-	**User Tags**:
-		Definidos por los usuarios (los tags normales)
-		Inician con el Prefijo user:
-	**AWS Allocation Tags**:
-		Solo se muestran en el Billing Console
-		Tiene el prefijo aws: Ej: `aws:createdBy`
-		NO son aplicadas a los recursos que se crearon antes de la activación
-	**Cost Allocation Tags**:
-		Solo se muestran en el Billing Console
-		TOman hasta 24 horas para aparecer en los reportes
-		NO son aplicadas a los recursos que se crearon antes de la activación
-		Para activar estos Tags, de los Tags Normales se seleccionan cuales van a ser tambié nCtostAllocationTag
-
+- **User Tags**: Definidos por los usuarios (los tags normales), Inician con el Prefijo **user:**
+- **AWS Allocation Tags**: Solo se muestran en el Billing Console, prefijo aws: Ej: `aws:createdBy`, NO son aplicadas a los recursos que se crearon antes de la activación
+- **Cost Allocation Tags**: Solo se muestran en el Billing Console, NO son aplicadas a los recursos que se crearon antes de la activación. De los Tags Normales se seleccionan cuales van a ser también CotstAllocationTag
 
 ## TIPS
 
-- Todos los endpoints de AWS exponen HTTPS
-- S3 si tiene un endpoint HTTP, pero no se debería usar
-
-S3 Data Encryption At Rest
-- SSE-S3: Usando llave de AWS
-- SSE-KMS: Usando propia llave de KMS
-- SSE-C: Usando propia llave (AWS no la almacena)
-- Client Side encryption: Enviar data encryptada a AWS, (AWS no tiene conocimiento de la llave)
-- Glacier usa encriptación por defecto
-
-Encripción de EBS, EFC, RDS, ElasticCache, DynamoDB
-- Se puede usar la llave del servicio o una propia de KMS
-
--PHI = Protected Health Information 
--PII = Personally-Identifying Information
-
+- PHI = Protected Health Information 
+- PII = Personally-Identifying Information
 - Direct Connect = Conexión privada directa entre site y AWS
 - VPN = Site-to-Site para protejer a nivel de internet
 - Network ACL: stateless firewall a nivel de VPC
 - WAF: Seguridad web contra Exploits
 - Security Group: Staful firewall a nivel del Hypervisor de instancia 
 - System Firewall: Instalar firewall dentro de EC2 (Linux firewalls, Windows Firewall)
-
-
 
 ## ASG
 
@@ -786,40 +571,35 @@ En está opción del AG se puede cambiar el min/max/deseado a una hora específi
 
 ### Scaling Policy: 
 
- **Target Tracking Scaling**:
-		- En esta opción se basa en métricas (CPU, LB Request COunt, Network Bytes In/Out), y cuando se excede del porcentaje deseado de todo el AG, se aumenta el "desired" creando así una nueva instancia. 
-		- Aca existe una opción llamada "disable scale-in" para que las instancias nuevas que se levantan no se borren incluso si la métrica ya bajó, de este modo el AG solo va a crear instancias no a bajarlas.
-		- Cuando se crea un Scalin Policy también se crea un Alarm en Cloudwatch que es el que realmente controla el AG.
+ - **Target Tracking Scaling**:
+	- En esta opción se basa en métricas (CPU, LB Request COunt, Network Bytes In/Out), y cuando se excede del porcentaje deseado de todo el AG, se aumenta el "desired" creando así una nueva instancia. 
+	- Aca existe una opción llamada "disable scale-in" para que las instancias nuevas que se levantan no se borren incluso si la métrica ya bajó, de este modo el AG solo va a crear instancias no a bajarlas.
+	- Cuando se crea un Scalin Policy también se crea un Alarm en Cloudwatch que es el que realmente controla el AG.
 
- **Simple Scaling Policy**:
-		- Acá primero hay que crea una alarma en Cloudwatch, luego seleccionar si queremos Subir/Bajar N Instancias.
-		- Suena mas sencilla que la anterior, pero la ventaja que da es que como se baja en una Alarma propia, podría ser en respuesta de cualquier servicio de AWS.
+ - **Simple Scaling Policy**:
+	- Acá primero hay que crea una alarma en Cloudwatch, luego seleccionar si queremos Subir/Bajar N Instancias.
+	- Suena mas sencilla que la anterior, pero la ventaja que da es que como se baja en una Alarma propia, podría ser en respuesta de cualquier servicio de AWS.
 
- **Scaling Policy With Steps**:
-		- También trabaja con una alarma independente (como la anterior) pero permite definir múltiples pasos ejemplo:
-			Agregar 	1 Instancia 	Cuando 		40  	<= 		CPU Utilization  	<= 70
-			Agregar 	2 Instancia 	Cuando 		70  	<= 		CPU Utilization  	<= 90
-			Agregar 	3 Instancia 	Cuando 		90  	<= 		CPU Utilization  	<= +infinity
+ - **Scaling Policy With Steps**:
+	- También trabaja con una alarma independente (como la anterior) pero permite definir múltiples pasos ejemplo:
+		Agregar 	1 Instancia 	Cuando 		40  	<= 		CPU Utilization  	<= 70
+		Agregar 	2 Instancia 	Cuando 		70  	<= 		CPU Utilization  	<= 90
+		Agregar 	3 Instancia 	Cuando 		90  	<= 		CPU Utilization  	<= +infinity
 
 
 ### ALB Integration:
 - Cuando se crea el ALB se tiene que crear un TargetGroup donde se le indica que va a ser de tipo Instance (también puede ser IP ó lambda). Luego se edita el ASG para asociarle el TargetGroup del ALB, así cuando el ASG escale, agregue o elimine esas instancias al TargetGroup del LB. (Según veo el TargetGroup del ALB es un concepto virtual de agrupación para hacer posible que las instancias de un ASG puedan ser asociadas a varios TG de diferentes LBs, El campo permite varios TargetGroup)
-
 - A nivel del TargetGroup del LB se puede configurar "Slow start duration" para que una instancia empiece a recibir tráfico después de N segundos, para que una nueva instancia no empiece a recibir gran cantidad de tráfico desde el inicio.
-
 
 ### Suspending and Resuming Scaling Processes
  - A nivel de ASG se puede suspender varios tipos de eventos:
-		Launch, Terminate, AddToLoadBalancer, AlarmNotification, AZRebalance, HealthCheck, InstanceRefresh, ReplaceUnhealthy, ScheduledActions
+	Launch, Terminate, AddToLoadBalancer, AlarmNotification, AZRebalance, HealthCheck, InstanceRefresh, ReplaceUnhealthy, ScheduledActions
  - Si se suspende el `Launch` ó el `Terminate` si se modifica el "Desired", no se subirian o bajaran instancias respectivamente. Si por ejemplo se suspenda el HealthCheck, ya no se harían Healthchecks
  - Si se suspende `ReplaceUnhealthy` permitiría poder hacer Troubleshoting a instancias que estén teniendo problemas y que el ASG las esté terminando por Unhealthy.
- - Si se suspende el `AddToLoadBalancer` lo que hace es que agrega la instancia al ASG, pero no la agrega al TargetGroup del LB, para que no reciba tráfico. Después se puede asociar manualmente al TargetGroup para que reciba tráfico.
-	(Hay que aprenderse todos estos eventos usando el Bookmark.)
-
+ - Si se suspende el `AddToLoadBalancer` lo que hace es que agrega la instancia al ASG, pero no la agrega al TargetGroup del LB, para que no reciba tráfico. Después se puede asociar manualmente al TargetGroup para que reciba tráfico. (Hay que aprenderse todos estos eventos usando el Bookmark.)
  Adicional a los eventos anteriores, si queremos aislar una instancia del ASG para troubleshoting, se puede hacer de dos formas: 
  	1. `Detach`: La quita del ASG y crea una nueva
 		2. `Set to Standby`: No la quita del ASG, pero el LB no le manda tráfico.
-
 Otra opción importante es `Scale In Protection` a una instancia de un ASG se le puede activar y con esta opción el ASG nunca le va a dar Terminate.
 
 ### ASG Lyfecycle Hooks
@@ -836,12 +616,11 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 	- Tomar un snapshot de EBS antes que la instancia se termine
 
 ### AGS Termination Policies
-- Default
-	La default evalúa lo siguiente:
-		1. Cual AZ tiene mas instancias, y busca la que no tenga scale in protection
-		2. Mira el Allocation Strategy (On-Demand, Spot)
-		3. Mira cual tiene el mas viejo LaunchTemplate/LaunchConfiguration
-		4. por último si hay varias que hagan match, selecciona random.
+- Default: evalúa lo siguiente:
+	1. Cual AZ tiene mas instancias, y busca la que no tenga scale in protection
+	2. Mira el Allocation Strategy (On-Demand, Spot)
+	3. Mira cual tiene el mas viejo LaunchTemplate/LaunchConfiguration
+	4. por último si hay varias que hagan match, selecciona random.
 - OldestInstance
 - OldestLaunchConfiguration
 - NewestInstance
@@ -856,55 +635,40 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 	Este CU surgió porque en el ejemplo se aumenta o decrementa el Desired de un ASG basado en la cantidad de mensajes que hay en una cola.
 
 ### CreationPolicy & UpdatePolicy
-
 - Si se está creando un ASG desde CloudFormation y queremos que el ASG falle si las instancias no se lanzan bien, se puedar configurar un 
 	`CreationPolicy` en el ASG, en el que le decimos por ej: que queremos esperar N Signals desde las máquinas, y sino se reciben el ASG fallaría al crearse. Los signals se envían usando el `cfn-signal` (CF bootstrap scripts) que ya se había visto 
-
 - Con la propiedad de CF `AutoScalingRollingUpdate`, podemos especificar cuantas instancias queremos que estén atendiendo y cuantas se van a actualizar en un ASG para poder hacer un RollingUpdate.
-
 - Tambien existe la propiedad de CF `AutoScalingReplacingUpdate`, acá lo que hace es crear un nuevo ASG y cuando la CreationPolicy se valida, entonces se elimina el viejo ASG
-
-
 
 ## DEPLOYMENTS STRATEGIES (REVIEW)
 
 - In Place 		(1 LB, 1 TG, 1 ASG)	(dowtime, las mismas instancias se actualizan)
 - Rolling  		(1 LB, 1 TG, 1 ASG, nuevas instancias)
 - Replace  		(1 LB, 1 TG, 2 ASG, nuevas instancias)
-- Blue / Green  (2 LB, 2 TG, 2 ASG, nuevas instancias, R53) (Acá manda el Route 53: Simple / Weighted (Mandar un poco de tráfico primero))
-
+- Blue / Green  	(2 LB, 2 TG, 2 ASG, nuevas instancias, R53) (Acá manda el Route 53: Simple / Weighted (Mandar un poco de tráfico primero))
 
 ## DYNAMO
-
 - Indices Secundarios Locales solo se pueden crear cuando se crea una tabla, después solo se pueden crearn secundarios globales. Además los Locales tiene que tener la misma Llave primaria que la tabla, solo el Sort cambia.
 - La capacidad On-Demand (siempre va a funcionar bien) es mucho más cara que Provisioned. Cuando se selecciona Provisioned se definen los Read/Write Capacity Units ó el mínimo y máximo para escalamiento.
-
 ### DAX: 
 - Clúster de Dynamo a nivel de tabla para lecturas intensivas, elegimos el tipo de instancia de los nodos y cuantos queremos, para que la data más accesada se mantenga en memoria.
 - Sube el performance hasta 10x, de milisegundos a microsegundos, inclusive millones de peticiones por segundo.
-
 ### Dynamo Streams
 - Para enviar los eventos de los items a un lambda, se puede configurar para enviar varios al mismo tiempo (batchs), se puede enviar solo las llaves, la nueva, vieja ó ambas versiones del item. Loguea INSERT, UPDATE, DELETE
 - Con Dynamo Streams solo podemos conectar 2 lambdas al mismo tiempo, por el límite de Kinesis Streams que es lo que usa por debajo. Si quisieramos tener 3 lambdas conectadas, lo mejor sería tener un lambda conectada y ese Lambda haría el envío a SNS Topics y luego a este Topic si tener varias Lambdas conectadas.
-
 ### Global Tables
 - Solo se puede habilitar cuando esta activo Dynamos Streams y la tabla esté vacía.
 - Sive para tener una replica de la tabla en otra region
 - Si se insertan en la replica también se reflejan en la principal (Two-Ways replication)
-
 ### TTL
 - Tiempo de expiración de los Items
 - Cuando se elimina el registro también se manda el evento a Dynamo Streams, y si está habilitado GlobalTables, también se borra de las replicadas.
-
 ### CUs
 - Cuando escriben a S3, llamar a un Lambda para que en Dynamo almacene la Metadata de los archivos, para poder: buscar por fecha, calcular el espacio de cada usuario en el bucket, listar objetos con ciertos atributos, listar objetos que se subieron cierto rango de fechas.
 - Construir un API para buscar Items con:  Dynamo + Dynamo Streams + Lambda + Elastic Search
 
-
 ## Multi AZ in AWS
-
 - Servicios donde Multi-AZ debe ser habilitada manualmente:
-	
 	EFS, ELB, ASG, Beanstalk: Asignar AZ
 	RDS, ElasticCache: Multi-AZ
 	Aurora: 
@@ -912,25 +676,21 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 		Puede tener multi-AZ para la BD (tal como RDS)
 	ElasticSearch:	Multi master
 	Jenkins: Multi Master
-
 - Servicios donde MUlti-AZ es implícito:
-	
+
 	S3: (Excepto OneZone-InfrequentAccess)
 	DynamoDB
 	Todos los Managed Services propietarios de AWS
-
 - EBS
 	Está atado a una sola AZ. Que se podría hacer para que EBS fuera Multi AZ?
-
 	1. Tener un ASG con 1 min/max/desired
 	2. Tener un Lyfecycle hooks para Terminate: Que haga un snaphot del EBS volume
 	3. Tener un Lyfecycle hooks para Start:	Que copie el snapshot, cree un EBS y lo atache a la instancia nueva
 
-	TIP: Sí un EBS está usando PIOPS, para obtener el máximo performance después del snapshot, se debe leer el volumen entero una vez (pre-warming of IO blocks)
+TIP: Sí un EBS está usando PIOPS, para obtener el máximo performance después del snapshot, se debe leer el volumen entero una vez (pre-warming of IO blocks)
 
 
 ## Multi Region Services
-
 - DynamoDB Global Tables (Active-Active, Habilitado por Streams)
 - AWS Config Aggregators (Multi Región y Multi Cuenta)
 - RDS Cross Region Read Replicas (usado para lectura y disaster recovery)
@@ -951,15 +711,12 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 Los HealthChecks también ser integran con CW Metrics para enviar alertas, etc..
 
 ## Cloudformations StackSets
-
 - Para desplegar Stacks en múltiples cuentas / regiones
 - Una vez desplegado el StackSet en múltiples regiones ó cuentas se pueden agregar más regiones después.
-
 - CUs
 	- Habilitar AWS Config en todas las regiones ó cuentas donde esté trabajando.
 	- Habilitar CloudTrail en otra cuenta 
 	- Habilitar GuardDuty en otra cuenta
-
 
 ## Multi Region CodePipeline
 - El pipeline debe copiar los artefactos a las diferentes regiones para que así CodeDeploy en diferente región pueda encontrar los artefactos.
@@ -984,7 +741,6 @@ Estrategias:
 	Todo el sistema corriendo en 2 regiones diferentes
 	Aurora Global Master y Slave
 
-
 Tips:
 - **Backups**:	
 EBS Snapshots, RDS automated backups
@@ -1000,7 +756,6 @@ CF, EB, Lambda
 Netflix "simian-army"
 
 ## On-Premise Strategies with AWS
-
  - Habilidad de descargar las Linux 2 AMI como VM (.iso format) (Vmware, Kvm, Virtualbox)
  - VM Import / Export
 		Migrar aplicaciones existentes a EC2, para disaster recovery
@@ -1154,3 +909,61 @@ Netflix "simian-army"
   - Cloudformation Stacks, Dynamo DB Reads and Write Capacity, RDS checks, VPC Internet Gateway, EC2 Reserved/OnDemand Leases
   - LB Optimization, RDS Multi AZ, S3 Bucket Logging and Versioning, Route 53 Record Set Checks
   - Cost Optimization: Low Usage of EC2, Idle LB, Idle RDS, Saving Plangs, Lambdas with Timeouts 
+
+
+## Kinesis
+- Kinesis es una altenativa a Apache Kafka, ideal para BigData en "real-time", IoT, clickstreams
+- La Data es automaticamente replicada a 3 AZ
+- Hay 3 servicios asociados a Kinesis:
+	- **Streams**:   streaming de ingesta de baja latencia a gran escala
+	- **Analytycs**: Analisis en tiempo real de Streams usando SQL 
+	- **Firehose**: Carga de Streams hacia S3, Redshift, ElasticSearch, Splunk...
+
+- El Producer puede enviar 1 MB/s ó 1,000 mensajes de escritura POR SHARD, si no se obtiene `ProvisionedThroughputException`
+- El Consumer puede leer 2 MB/s en lectura por SHARD en todos los consumers
+- 24 Horas de retención de data por defecto, puede ser extendida a 7 días
+
+	**Kinesis Producers**: Kinesis SDK, Kinesis Producer Library KPL, Kinesis Agent, CLoudwatch Logs, Terceros (Spark, Log4j Appenders, 					Flume, Kafka Connect, )
+	**Kinesis Consumers**: Kinesis SDK, Kinesis Client Library KCL, Kinesis Connector LIbrary, Kinesis Firehose, AWS Lambda
+						Terceros (Spark, Log4j Appenders, Flume, Kafka Connect)
+- **TIP**:  
+	- Kinesis Streams
+		- Tiempo Real
+		- Custom Code (producer / consumer)
+	- Firehose
+		- Casi Tiempo Real
+		- Fully managed
+
+
+## AWS Amplify
+-  Se usa para construir aplicaciones Web y Mobile.
+-  Para configurar el Backend ya se integra con varios servicios: S3, Cognito, AppSync, Api Gateway, Sagemaker, Lambda, Dynamo.. (Todo en un solo lugar)
+-  Para el frontend se usan librerias de Amplify para diferentes plataformas: Flutter, Ionic, Next, Angular, React, IOs, Android..
+-  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
+-  Se integra con CodeCommit para tener deployments por branch
+
+## DMS Database Migration Service
+- Para migrar DBs a hacia AWS / OnPremise, resilient, self healing
+- Migraciones Homogeneas y Heterogeneas
+- La tarea de migración se ejecuta en una EC2
+- Como Source y Target se puede usar RDS, S3, DocumentDB, OpenSearch, Redshift, Kafka, Neptune, Redis... 
+- Para hacer la conversión entre diferentes motores se usa el **Schema Conversion Tool SCT** (si se usa el mismo motor no es necesario). Ej:
+	- SQL Server -> Mysql
+
+## AWS Storage Gateway
+- Es el puente entre la Data OnPremise  y Cloud
+- Para almacenar la data Storage Gateway puede usar: **EBS, S3, Glacier**
+- Los tipos de Storage Gateway son:
+	- File Gateway
+	- Volume Gateway
+	- Tape Gateway
+- Cache Refresh, sirve para que los usuarios en OnPremise vean los archivos que se crearon directamente en un bucket.
+
+## EKS
+- CU: Si la empresa ya esta usando K8s OnPremise o en otra Nube y quiere migrar a AWS
+- Tipos de nodos:
+	- **Managed Node Groups**: Nodos EC2 Manejados por AWS, Usa un ASG, Soporta OnDemand y Spot 
+	- **Self-Managed Nodes**: Nodos creados por uno mismo, agregados a un ASG, Soporta OnDemand y Spot
+	- **Fargate**: Serverless
+- Container Storage Interface (CSI) soporta: **EBS, EFS, FSx for Lustre, FSx for NetApp ONTAP**
+- Se puede configurar el ControlPlane para activar el Logging y enviarlo a Cloudwatch Logs. Para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
