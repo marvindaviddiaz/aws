@@ -1,34 +1,29 @@
 # CodeCommit
-
-- Para restringir que suban código a master, se debe bloquear a nivel de IAM User con política Deny
-- Incluye **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
+- **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
+- La política que deben tener los developers es **AWSCodeCommitPowerUser**, y restringir que suban código a master con política Deny
 
 # CodeBuild (buildspec.yml)
-
-- En CodeBuild todo el Serverless, solo se para por el tiempo que dure el build
 - Al Crear el proyecto se define la imagen a usar para hacer los Builds: AWS Managed Image o Custom Image, así como los recursos y si queremos que corra adentro de una VPC. Lo minimo son 3GB y 2 vCPUs. Las imagenes de AWS son genéricas no incluyen frameworks.
 - El archivo de configuración se compone de: Variables, Fases, Artefactos
 - Dentro del archivo yaml se puede configurar el runtime-version ejemplo: `docker: 18`  si queremos crear y subir imagenes de docker, acá si se pueden usar runtimes de frameworks o lenguajes de programación.
 
 # CodeDeploy (appspec.yml)
-
 - CodeDeploy permite desplegar en EC2/Onpremise, Lambda, ECS
-- Para usar CodeDeploy se debe instalar el agente de CodeDeploy en las instancias, crear un bucket para los artefactos y hacer push de los artefactos en ese bucket
-- **Deployments Groups**: Son grupos de instancias (ó nodos onPremise) donde se hará el Deploy
+- Para usar CodeDeploy se debe instalar el **agente de CodeDeploy en las instancias**, crear un bucket para los artefactos y hacer push de los artefactos en ese bucket
+- **Deployments Groups**: Son grupos de instancias ó ASG donde se harán los Deploys, **Si son instancias  se tiene que elegir por medio de Tags**
 - **Hooks**: Pasos de cada etapa del Deploy: ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService, etc..
 - Los Hooks varían según el tipo de la aplicación EC2, Lambda, y  el tipo de Despliegue: BlueGreen, In-place, etc.. 
 
-
 ### Deployment Configurations: 
 - Donde se define el tipo de Deployment, para EC2 tenemos los siguientes:
-	- In-Place:
+	- **In-Place**:
 		- AllAtOnce
 		- OneAtATime
 		- HalfAtATime
 		- Custom (Ejemplo: Mínimo que el 80% siempre esté disponible al ir desplegando)
-	- Blue/Green:
+	- **Blue/Green**:
 		- Se usan en conjunto con Auto Scaling Group ó con Instancias Fijas pero se deben crear antes de hacer el deployment
-		- En BLueGreen el LB es necesario
+		- En BlueGreen el LB es necesario
 
 - Para lambda existen los siguientes:
 	- AllAtOnce, 
@@ -41,19 +36,16 @@
  2. Basados en Umbrales de alguna alarma de Cloudwatch (Ej, si el cpu de una nueva instalación sobrepasa el 75% hacer rollback)
 
 ### On premise Instances:
-- Se pueden configurar instancias fuera de AWS para desplegar aplicaciones usando CodeDeploy, en la documentación se muestran 11 pasos para realizarlo, pero básicamente hay 2 formas: Una es creando un IAM User por cada instancia y configurar cada instancia con aws cli y CodeBuild Agent esta forma es ideal cuando hay pocas máquinas OnPremises, y la otra que es más segura y trabajosa es usando un Rol haciendo uso de credenciales temporales usando STS.
-
+- Se pueden usar máquinas OnPremises en CodeDeploy, para realizarlo hay dos formas: 1. Creando un IAM User por cada instancia y configurar con aws cli esta forma es ideal cuando hay pocas máquinas OnPremises, y la otra que es más segura y trabajosa es usando un Rol y obteniendo credenciales temporales de STS usando un daemon.
 
 # Code Pipeline:
 
 - Cada etapa del pipeline puede crear Artifacts, los almacena en S3 y es la entrada para la siguiente etapa
 - Por cada branch se debe crear un pipeline
-- Para iniciar el pipeline se puede de 2 formas: 
-
-Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
+- Para iniciar el pipeline se puede de 2 formas:  Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - Los artifacts de CodePipeline son diferentes de los artifacts de CodeBuild
 - Se pueden agregar ManualAprovals dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo pipeline)
-- Cuando un pipeline se define por CF (código), el atributo `runOrder` en los StageAction indica el órden de ejecución
+- Cuando un pipeline se define por CF (código), el atributo `runOrder` en los StageAction indica el órden de ejecución.
 - Se puede ejecutar un lambda desde el pipeline y enviar parámetros, Ej. Hacer un Request 200 al sitio web después del deploy
 - `PutJobSuccessResult`, `PutJobFailureResult` para indicar al Pipeline si el Job se ejecutó con éxito o falló
 - Un buen CU para CodePipeline es desplegar templates de CloudFormation, también con CF se pueden crear pipelines 
@@ -66,7 +58,6 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - En las opciones del proyecto de CodeStar se puede configurar y ver todo en el formulario: buckets, roles de servicio, CF.. 
 - A bajo nivel CodeStar está configurado con un CF template.yml usando una transformación `AWS::CodeStar`
 
-
 # Jenkins:
 
 - Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
@@ -75,22 +66,20 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - **ECS Plugin**: Usa ECS en lugar de agentes fijos, volviendo un poco serverless la solución.
 
 # Code Artifact
-
 - Para almacenar dependencias: Maven, Gradle, npm, yarn, pip...
 - Tambien funciona como proxy para los repositorios centrales y almacena una copia.
 - Se le puede dar acceso a otras cuentas por medió de IAM Policies.
 - **Upsteam Repositories**: Descargar dependencias de un solo endpoint y el Upsteam apuntar hasta a 10 repositorios.
-- Los Domains sirven para agrupar repositorios, lo ideal es que en una sola cuenta este CodeArtifact y por medio de dominios demos acceso a otras cuentas de AWS.
+- Los Domains sirven para agrupar repositorios, lo ideal es que en una sola cuenta este CodeArtifact y por medio de dominios dar acceso a otras cuentas de AWS.
 - En un lambda se puede agregar usando anotaciones (decorator) ó tambien desde la consola de aws.
 
 # Code Guru
-
 - Automatiza las revisiones de código, usa ML
 - Da 2 funcionalidades: **CodeGuru Reviewer** (analisis estático) y **CodeGuru Profiler** (performance en ejecución)
-- Soporta Java y Python
-- Se integra con Github, Bitbucket, CodeCommit
+- Soporta Java y Python, se integra con Github, Bitbucket, CodeCommit
 - Puede ser usado en aplicaciones corriendo en AWS o OnPremise
 - **CodeGuru Reviewer Secrets Detector** Usa ML para detectar secrets, passwords, llaves, etc. en el código
+- Cuando se asocia CodeGuru Reviewer con un repositorio de CodeCommit, **automáticamente analyza los pull requests.**
 
 # EC2 Image Builder
 
@@ -107,7 +96,6 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 -  Para el Deploy se usa Amplify Console y/ó Amazon Cloudfront
 -  Se integra con CodeCommit para tener deployments por branch
 
-
 # Cloudformation:
 
 - En CF hay una opción que lleva al Calculator para estimar el costo mensual basado en un template
@@ -118,12 +106,20 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 
 - **cfn-init**: 
 	- Correr scripts de una manera más elegante, EC2 se comunica con CF para bajar los scripts en formato yaml
-	- Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible
+	- Los script se crean mediante: `AWS::Cloudformation::Init` y permiten definir (packages, files, commands, sevices, etc.. como Ansible)
 	- Para llamar cf-init se hace desde el UserData:
 		`/opt/aws/bien/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region}`
 	- Los logs de cfn-init se almacenan en `/var/log/cfn-init.log`
-	- Para que el template se quede esperando el resultado de cfn-init se usa `cfn-signal`
+- **cfn-signal**: 
+	- Para que el template se quede esperando el resultado de cfn-init se usa **`cfn-signal`**
 		`/opt/aws/bien/cfn-signal  -e $? SampleWaitCondition ...`
+- **cfn-hup**: 
+	- Levanta un Daemon en EC2 que se queda escuchando si hay nuevos cambios en la Metadata de EC2
+		`/opt/aws/bincfn-hup ...`
+	- `/etc/cfn/cfn-hup.conf` almacena el nombre del stack y las credenciales para el Daemon 
+	- El Intervalo de chequeo para cambios en la metadata es de 15 minutos, pero se puede cambiar
+	- Ejemplo: Verificar cada 2 minutos si la metadata `CloudFormation::Init` ha tenido cambios, y si ha tenido ejecutar un script
+- **cfn-get-metadata**: Script para obtener la metadata
 
 - En la CREACIÓN del stack por defecto `Onfailure=ROLLBACK`  tambien se puede usar `OnFailure=DO_NOTHING`, para la actualización siempre se hace rollback en caso de fallos
 - Nunca actualizar un Nested Stack directamente, siempre hay que actualizar el Stack Padre.
@@ -136,7 +132,7 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 	- `DeletionPolicy=Delete` Default para todos los recursos (Excepto RDS::DBCluster que es Snapshot)
 	- Para borrar un Stack que tiene un bucket primero se tiene que borrar el contenido del bucket
 
-- **Termination Protection**: Para prevenir que eliminen el Stack. (Opción manual como en Ec2)
+- **Termination Protection**: Para prevenir que eliminen el Stack.
 
 - **Parameters from SSM**
 	- Los parámetros del Stack pueden ser de SSM: `Type: AWS::SSM::Parameter::Value<String>`
@@ -158,15 +154,6 @@ Automático con CloudWatch Events` ó `Periódico con CodePipeline (Poll)`
 - **UPDATE_ROLLBACK_FAILED**: Leer documentación adicional para este estado
 
 - **InsufficientCapabilitiesException**: Cuando no se han puesto los capabilities necesarios. Leer documentacion adicional
-
-- **cfn-hup**: 
-	- Levanta un Daemon en EC2 que se queda escuchando si hay nuevos cambios en la Metadata de EC2
-		`/opt/aws/bincfn-hup ...`
-	- `/etc/cfn/cfn-hup.conf` almacena el nombre del stack y las credenciales para el Daemon 
-	- El Intervalo de chequeo para cambios en la metadata es de 15 minutos, pero se puede cambiar
-	- Ejemplo: Verificar cada 2 minutos si la metadata `CloudFormation::Init` ha tenido cambios, y si ha tenido ejecutar un script
-
-- **cfn-get-metadata**: Script para obtener la metadata
 
 - **Stack Policies**:
 	- Son como políticas de IAM donde podemos restringir acciones sobre recursos específicos del Stack
