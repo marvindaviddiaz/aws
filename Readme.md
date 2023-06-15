@@ -671,20 +671,17 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 
 ## Multi AZ in AWS
 - Servicios donde Multi-AZ debe ser habilitada manualmente:
-	EFS, ELB, ASG, Beanstalk: Asignar AZ
-	RDS, ElasticCache: Multi-AZ
-	Aurora: 
-		Data es almacenada atravéz de multi-AZ 
-		Puede tener multi-AZ para la BD (tal como RDS)
-	ElasticSearch:	Multi master
-	Jenkins: Multi Master
+	- EFS, ELB, ASG, Beanstalk: Asignar AZ
+	- RDS, ElasticCache: Multi-AZ
+	- Aurora:  Data es almacenada atravéz de multi-AZ. Puede tener multi-AZ para la BD (tal como RDS)
+	- ElasticSearch:	Multi master
+	- Jenkins: Multi Master
 - Servicios donde MUlti-AZ es implícito:
-
-	S3: (Excepto OneZone-InfrequentAccess)
-	DynamoDB
-	Todos los Managed Services propietarios de AWS
+	- S3: (Excepto OneZone-InfrequentAccess)
+	- DynamoDB
+	- Todos los Managed Services propietarios de AWS
 - EBS
-	Está atado a una sola AZ. Que se podría hacer para que EBS fuera Multi AZ?
+	- Está atado a una sola AZ. Que se podría hacer para que EBS fuera Multi AZ?
 	1. Tener un ASG con 1 min/max/desired
 	2. Tener un Lyfecycle hooks para Terminate: Que haga un snaphot del EBS volume
 	3. Tener un Lyfecycle hooks para Start:	Que copie el snapshot, cree un EBS y lo atache a la instancia nueva
