@@ -180,6 +180,13 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - **Stack Policies**:
 	- Parecidas a las políticas de IAM donde podemos restringir acciones sobre recursos específicos del Stack, estas políticas se validan cuando se actualiza el Stack
 	- Aunque se puede modificar la política temporalmente para permitir acciones específicas, posiblemente por modificaciones urgentes, pero luego de aplicar la modificación, la política regresa a su estado original con el que fué creada.
+- **Cloudformations StackSets**
+	- Para desplegar Stacks en múltiples cuentas / regiones
+	- Una vez desplegado el StackSet en múltiples regiones ó cuentas se pueden agregar más regiones después.
+	- CUs
+		- Habilitar AWS Config en todas las regiones ó cuentas donde esté trabajando.
+		- Habilitar CloudTrail en otra cuenta 
+		- Habilitar GuardDuty en otra cuenta
 
 ## AWS CDK - CLOUD DEVELOPMENT KIT
 - Sirve para definir infraestructura usando lenguajes de programación: JS, TS, Java y .Net (para no usar Yaml/Json), Genera CF por debajo
@@ -716,14 +723,6 @@ TIP: Sí un EBS está usando PIOPS, para obtener el máximo performance después
 	3. Cloudwatch Alarms (FULL CONTROL: throttles de Dynamo, Custom Metrics..)
 
 Los HealthChecks también ser integran con CW Metrics para enviar alertas, etc..
-
-## Cloudformations StackSets
-- Para desplegar Stacks en múltiples cuentas / regiones
-- Una vez desplegado el StackSet en múltiples regiones ó cuentas se pueden agregar más regiones después.
-- CUs
-	- Habilitar AWS Config en todas las regiones ó cuentas donde esté trabajando.
-	- Habilitar CloudTrail en otra cuenta 
-	- Habilitar GuardDuty en otra cuenta
 
 ## Multi Region CodePipeline
 - El pipeline debe copiar los artefactos a las diferentes regiones para que así CodeDeploy en diferente región pueda encontrar los artefactos.
