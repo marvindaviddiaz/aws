@@ -421,7 +421,16 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- La configuración se puede almacenar en: Parameter Store / SSM Documents / S3
 
 
-## CONFIG
+## AWS Config
+- Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
+- **No previenen que los cambios pasen, pero si se pueden hacer Remediations**
+- Se puede almancer la configuración en S3 para analyzar con Athena
+- Se pueden usar reglas predefinidas o escribir las propias usando Lambda
+- **Configuration Recorder** almacena la configuración de los recursos a travéz del tiempo (se crea automáticamente cuando se habilita Config)
+- Para evitar que desabiliten Config se recomienda usar una SCP a nivel de la organización
+- **Aggregators** centralizan la data de config en todas las cuentas
+- **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
+- **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
 - Util para dar seguimiento a la configuración de todos los recursos de una cuenta
 - Cada regla que se agrega tiene un costo de $1 al mes
 - Las reglas se pueden validar siempre que hayan cambios o de forma periódica
@@ -430,8 +439,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- Se configuran usando Lambda
 	- Pueden ser invocadas por cambios en la configuración o de forma periódica
 	- Puede monitorear cambios en los tipos de recursos asociados, Tags, Todos los cambios
-- Por cada regla se puede definir un Remediation Action (Por debajo usa SSM Automation usando las de AWS o definiendo un Custom RemediationAction). Por cada RemediationAction se definen Retries, timeout, parámetros de entrada,
-
+- Por cada regla se puede definir un Remediation Action (Por debajo usa SSM Automation usando las de AWS o definiendo un Custom RemediationAction). Por cada RemediationAction se definen Retries, timeout, parámetros de entrada.
 - Notificaciones que Config puede enviar a un SNS Topics. La idea es recibir notificaciones cuando:
   - Cambio en la configuración de un recurso
   - Cuando se reciben cambios de la configuración en nuestra cuenta
@@ -765,17 +773,6 @@ Netflix "simian-army"
 		- On-Premise => AWS, 	AWS => AWS, 	AWS => OnPremise
  - AWS Server Migration Service (SMS)
 		Replicacion Incremental de OnPremise a AWS (en ejecución)
-
-## AWS Config
-- Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
-- **N previenen que los cambios pasen, pero si se pueden hacer Remediations**
-- Se puede almancer la configuración en S3 para analyzar con Athena
-- Se pueden usar reglas predefinidas o escribir las propias usando Lambda
-- **Configuration Recorder** almacena la configuración de los recursos a travéz del tiempo (se crea automáticamente cuando se habilita Config)
-- Para evitar que desabiliten Config se recomienda usar una SCP a nivel de la organización
-- **Aggregators** centralizan la data de config en todas las cuentas
-- **Conformance Packs** Colección de **Config Rules** y **Remediations** empaquetadas en Yaml (similiar a CF) para desplegar en la organización, acá más que todo se configuran las reglas existentes de AWS ya con sus respectivos parámetros de entrada. Ej: Para la regla `iam-password-policy` van a tener una longitud de 14 como mínimo. **Enfocadas a cuentas Individuales y Organización**
-- **Organizacional Rules** Son Reglas de Config que aplican a todas las cuentas de una organización, similar a los Conformance packs, solo que estás están **enfocadas a una organización**.
 
 ## AWS ORGANIZATIONS 
 
