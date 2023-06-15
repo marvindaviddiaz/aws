@@ -478,7 +478,6 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - Para hacer un escaneo a una instancia, es necesario que SSM esté activado y las instancias tengan el Rol de 
 	`AmazonSsmRoleForInstancesQuickSetup`
 
-
 ## EC2 COMPLIANCE
 
 - Config
@@ -500,60 +499,9 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- SSM, Opsworks, Ansible, Chef, Pupper, User Data
 	- Se asegura que las instancias tengan la configuración apropiada
 
-
-
 ## PERSONAL HEALTH DASHBOARD
-
 - Se integra con Cloudwatch Events para notificar o realizar acciones en base a los eventos de Health de todos o algunos servicios que afectar a la cuenta.
 - Cuando un AccessKey y SecreteKey son expuestas en un repositorio de Github público, AWS monitorea y envia un evento que puede ser Capturado en CloudwatchEvent y realizar una tarea automatizada. En el ejemplo se llama un StepFunction que elimina las credenciales, hace un query en Cloudtrail para ver que hicieron con esas credenciales, luego notifica por correo electrónico el resultado de cloudtrail.
-
-
-## TRUSTED ADVISOR
-
-- Da recomendaciones para la cuenta, tiene 2 tier, la segunda tiene más recomendaciones y es más cara. Se centra en:
-	- **Cost Optimization**: Low Utilization EC2 Instances, Idle LB, Underutilized EBS VOlumnes, Unassociated IP Addreses, ...
-	- **Performance**: Alta utilización de Instancias, EBS Volumnes..
-	- **Security**: MFA en root, Security Groups, Public Snapshots, S3 Permissions, IAM Access Key Rotation 
-	- **Faul Tolerance**: Chequea la edad de los Snapshots, Optimización de LB, Redundancia de Tunel de VPN, RDS Backups...
-	- **Service Limits**: Chequea cuando el se llega al 80% de los límites de varios servicios
-- Tambien se puede integrar con Cloudwatch Events, para detecta y reaccionar a los cambios de estado de los Checks de Trusted Advisor. CUs:
-	- Enviar una notificación a Slack cuando hay un cambio de estado en el Check
-	- Push Data sobre los Checks hacia Kinesis Stream para monitoreo en tiempo real.
-	- Parar una instancia con baja utilización
-	- Crear Snapshots de EBS que no tengan un backup reciente
-	- Borrar IAM Keys expuestas y monitorear el uso (Mismo CU visto en Health)
-	- Habilitar el versionamiento en S3 Bucket
-	- (Algunos de estos CU también se pueden hacer sin Trusted Advisor)
-- Para que aparezcan los Eventos en Cloudwatch hay que situarse en us-east-1 por ser un servicio global, el tipo de evento principal es `Chek Item Refresh Status`
-- Cuando se paga soporte Business ó Entreprise,  en Cloudwatch aparecen más Metricas de Trusted Advisor
-- Por defecto TrustedAdvisor se refresca varias veces al día, pero se puede automatizar y tener un proceso para que cada 5 minutos esté ejecutando el `refresh-trusted-advisor-check` y para consultar el `describe-trusted-advisor-check-result`
-
-## GUARD DUTY
-- Detecta amenazas de forma inteligente en la Cuenta usando Machine Learning
-- Analiza CLoudTrail Logs, VPC Flow Logs, DNS Logs
-- Notifica en cazo de algún hallazgo y se integra con AWS Lambda
-- Puede detectar si una instancia está minando Bitcoin
-- Detecta Ataques de fuerza bruta
-- Tambien se integra con Cloudwatch Events para automatización, el evento es `GuardDuty Finding`. Es importante hacer estás integraciónes para ser notificados ó tomar accones en tiempo real.
-
-## MACIE
-- Ayuda a analizar data sensible en S3 y da insights acerda de ella.
-- Analiza si en la data hay:
-	Private Keys (DSA, EC, PGP, RSA) 
-	Encrypted Data Blocks
-	Password etc shadow
-	Secret Keys (Facebook, Github, Slack, etc..)
-- Tiene integración con cuentas externas
-- Se puede customizar varias cosas (extensiones de archivos, expresiones regulares, etc..)
-
-## SECRETS MANAGER
-- La principal diferencia con Parameter Store, es que acá se pueden rotar los secrets y se integra con RDS.
-- $0.40 por secret por mes
-
-## LICENSE MANAGER
-- Para manejar el licenciamiento de varios proveedores: Microsoft, Oracle, Sap, etc..
-- Se pueden definir reglas para aumentar el número de licencias.
-- Se pueden asociar AMIs a la reglas, así cuando se lancen instancias de esa AMI, se obtiene una licencia del Pool definido.
 
 ## COST ALLOCATION TAGS
 - Son como los Tags, pero se muestran como columnas en los Reportes
@@ -873,9 +821,11 @@ Netflix "simian-army"
 - Security Policies constan de Reglas WAF, AWS Shield Advanced, Security Groups, Network Firewall VPC, Route 53
 
 ## GuardDuty
-- Detección de amenazas usando algoritmos de ML. Da 30 días trial
+- Detecta amenazas de forma inteligente en la Cuenta usando Machine Learning
 - Verifica: CloudTrail Logs, VPC Flow Logs, DNS Logs, EKS Audit Logs...
+- Tambien se integra con Cloudwatch Events para automatización, el evento es `GuardDuty Finding`. Es importante hacer estás integraciónes para ser notificados ó tomar accones en tiempo real.
 - **Puebe proteger contra ataques CryptoCurrency**
+- Detecta Ataques de fuerza bruta
 - Se pueden manejar múltiples cuentas en GuardDuty
 - Se recomienda integrar EventBridge para reaccionar a los hallazgos de GuardDuty y poder reaccionar usando Lambda. Ej: Bloquear una IP en SecurityGroup ó NACL, etc..
 - **TIP**: Se puede habilitar GuardDuty usando CF template, pero si ya está habilitado dará error el Stack, para este escenario se debe crear un CustomResource usando Lambda, para habilitar GuardDuty si no se encuentra habilitado.
@@ -898,12 +848,43 @@ Netflix "simian-army"
   - RDS Public Snapshots
   - Service Limits
 - Full checks: **Business & Enterprise**
-- Provee RECOMENDACIONES de múltiples servicios según los planes contratados. Ej:
-  - EBS Snapshots, RDS Public Snapshots, S3 bucket Permissions, IAM Ussage, MFA on Root Account, SG
-  - High CPU utilization, Cloudfront Optimization
-  - Cloudformation Stacks, Dynamo DB Reads and Write Capacity, RDS checks, VPC Internet Gateway, EC2 Reserved/OnDemand Leases
-  - LB Optimization, RDS Multi AZ, S3 Bucket Logging and Versioning, Route 53 Record Set Checks
-  - Cost Optimization: Low Usage of EC2, Idle LB, Idle RDS, Saving Plangs, Lambdas with Timeouts 
+- Da recomendaciones para la cuenta, tiene 2 tier, la segunda tiene más recomendaciones y es más cara. Se centra en:
+	- **Cost Optimization**: Low Utilization EC2 Instances, Idle LB, Underutilized EBS VOlumnes, Unassociated IP Addreses, ...
+	- **Performance**: Alta utilización de Instancias, EBS Volumnes..
+	- **Security**: MFA en root, Security Groups, Public Snapshots, S3 Permissions, IAM Access Key Rotation 
+	- **Faul Tolerance**: Chequea la edad de los Snapshots, Optimización de LB, Redundancia de Tunel de VPN, RDS Backups...
+	- **Service Limits**: Chequea cuando el se llega al 80% de los límites de varios servicios
+- Tambien se puede integrar con Cloudwatch Events, para detecta y reaccionar a los cambios de estado de los Checks de Trusted Advisor. 
+- CUs:
+	- Enviar una notificación a Slack cuando hay un cambio de estado en el Check
+	- Push Data sobre los Checks hacia Kinesis Stream para monitoreo en tiempo real.
+	- Parar una instancia con baja utilización
+	- Crear Snapshots de EBS que no tengan un backup reciente
+	- Borrar IAM Keys expuestas y monitorear el uso (Mismo CU visto en Health)
+	- Habilitar el versionamiento en S3 Bucket
+	- (Algunos de estos CU también se pueden hacer sin Trusted Advisor)
+- Para que aparezcan los Eventos en Cloudwatch hay que situarse en us-east-1 por ser un servicio global, el tipo de evento principal es `Chek Item Refresh Status`
+- Cuando se paga soporte Business ó Entreprise,  en Cloudwatch aparecen más Metricas de Trusted Advisor
+- Por defecto TrustedAdvisor se refresca varias veces al día, pero se puede automatizar y tener un proceso para que cada 5 minutos esté ejecutando el `refresh-trusted-advisor-check` y para consultar el `describe-trusted-advisor-check-result`
+
+## MACIE
+- Ayuda a analizar data sensible en S3 y da insights acerda de ella.
+- Analiza si en la data hay:
+	Private Keys (DSA, EC, PGP, RSA) 
+	Encrypted Data Blocks
+	Password etc shadow
+	Secret Keys (Facebook, Github, Slack, etc..)
+- Tiene integración con cuentas externas
+- Se puede customizar varias cosas (extensiones de archivos, expresiones regulares, etc..)
+
+## SECRETS MANAGER
+- La principal diferencia con Parameter Store, es que acá se pueden rotar los secrets y se integra con RDS.
+- $0.40 por secret por mes
+
+## LICENSE MANAGER
+- Para manejar el licenciamiento de varios proveedores: Microsoft, Oracle, Sap, etc..
+- Se pueden definir reglas para aumentar el número de licencias.
+- Se pueden asociar AMIs a la reglas, así cuando se lancen instancias de esa AMI, se obtiene una licencia del Pool definido.
 
 
 ## Kinesis
