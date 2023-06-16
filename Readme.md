@@ -420,10 +420,11 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 	- El usuario que usa es ssm-user
 
 - **SSM AppConfig**
-	- Permite Configurar, Validar y Desplegar configuraciones dinámicas a las aplicaciones.
+	- Permite Configurar, Validar y **Desplegar configuraciones** a las aplicaciones en ejecución (Containers, Lambda, EC2, IoT, Mobile Apps).
 	- No se necesita reinicar la aplicación
 	- La configuración se puede almacenar en: Parameter Store / SSM Documents / S3
-
+	- Las configuraciones se despliegan usando Deployment Strategies: **AllAtOnce, Linear, Canary**
+	- CU: Habilitar nuevos features, Habilitar a los premium subscribers accesar a contenido pagado.
 
 ## AWS Config
 - Ayuda a la auditoría y grabación a travéz del tiempo del compliance de los recursos de AWS, envía alertas, integración con EventBridge
