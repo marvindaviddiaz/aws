@@ -730,6 +730,9 @@ Netflix "simian-army"
 - Las OU agrupan varias cuentas, pueden haber OU adentro de un OU
 - Cuando se crean las cuentas se crea un rol en cada una `OrganizationAccountAccessRole` que es asumido por la master para realizar todo lo que se necesite.
 - Por defecto los descuentos de Instancias Reservadas y Saving Plans son aplicados a toda la organización, hay que desabilitar que sean compartidos, para que solo apliquen a las cuentas que querramos.
+- Servicios Principales en **AWS Organizations** con **Trusted Access** (permisos de ejecución en cualquier cuenta de la organización)
+	- **Cloudtrail, Config, Control Tower, Identity Center, Systems Manager**.
+
 
 ### Service Control Policies - SCP
 
@@ -941,6 +944,7 @@ Netflix "simian-army"
 - Servicios principales que permiten EventDriven: **Lambda, CW, EventBridge, Kinesis, CloudTrail, Config, S3**
 - **S3 Event Notifications**: Se puede llamar **directo** a **SNS, Lambda, SQS y EventBridge**, cuando crean objetos, eliminan, etiquetan, transicionan, etc.
 - Como se pueden automatizar los compliance issues? Configurando automatic Remediations en AWS Config.
+- Enviar notificación por credenciales en repositorio público? Crear EventBridge Rule para el evento **`AWS_RISK_CREDENTIALS_EXPOSED`** del Health Service
 
 <img src="https://github.com/marvindaviddiaz/aws/assets/13956614/9901d32d-48f5-4931-b71d-0b0740bda863" width="50%" height="50%">
 
