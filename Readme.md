@@ -253,11 +253,11 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - Estructura del Log: `userIdentity`, `eventTime`, `eventSource`, `eventName`, `requestParameters`, `responseElements`
 - Puede haber un Delay de hasta 15 minutos por parte de CloudTrail, **para eventos en tiempo Real se recomienda usar Cloudwatch Events**
 - El digest de los archivos aparece cada hora
-- **Integridad de los logs**: `aws cloudtrail validate-logs --trail-arn ... --start-time ... `
-- Para mandar los archivos de Cloudtrail a un S3 de otra cuenta (CrossAccount), hay que modificar el BucketPolicy para permitir escrituras y lecturas de otras cuentas.
+	- **Integridad de los logs**: `aws cloudtrail validate-logs --trail-arn ... --start-time ... `
 - **CloudTrail supports much more events than the events that are sent by AWS services to EventBridge.**
 - **EventBridge Integration**:
 	X SERVICIO HACE ALGUNA ACCIÓN  ==>    CLOUDTRAIL   ==>  EVENT BRIDGE
+- CU: Centrailizar los Logs de multiples cuenta en un solo Bucket: modificar el BucketPolicy para permitir acceso **CrossAccount** (escrituras de otras cuentas) y configurar en Cloudtrail de cada cuenta el Bucket de destino.
 - https://tusharf5.com/posts/aws-eventbridge/
 
 ## SQS
@@ -937,6 +937,12 @@ Netflix "simian-army"
 
 - AWS Global Accelerator is a service that improves the availability and performance of applications by using a global network of AWS edge locations. It allows you to route traffic to healthy endpoints in multiple Regions and ensures high availability and low latency by automatically directing traffic to the optimal endpoint based on health, geography, and routing policies. Deploying the application in multiple Availability Zones in each Region (also known as an active/active implementation) provides redundancy and ensures that the application remains available to users in case of a disaster affecting one Region.
 
+## Event Driven 
+- Servicios principales que permiten EventDriven: **Lambda, CW, EventBridge, Kinesis, CloudTrail, Config, S3**
+- **S3 Event Notifications**: Se puede llamar **directo** a **SNS, Lambda, SQS y EventBridge**, cuando crean objetos, eliminan, etiquetan, transicionan, etc.
+- Como se pueden automatizar los compliance issues? Configurando automatic Remediations en AWS Config.
+
+<img src="https://github.com/marvindaviddiaz/aws/assets/13956614/9901d32d-48f5-4931-b71d-0b0740bda863" width="50%" height="50%">
 
 ## Preguntas fallidas
 - Para setear el nombre de los artefactos en CodeBuild, se debe hacer en la **sección** de `artifacts` a nivel general. Ej: `build-$(AWS_REGION)`
