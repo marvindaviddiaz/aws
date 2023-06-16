@@ -233,11 +233,11 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - **Stack** => **Layers** (ELB, EC2/ECS, RDS)  => **Instances** (24x7, Time = Basadas en Horarios , Load = Basadas en Carga) => **Apps**
 - **Auto Healing**: Si el agente de OpsWork no se puede comunicar con AWS en 5 minutos, la instancia es reiniciada. Con CloudwatchEvents podemos definir una regla para ser notificados.
 - Cada Layer tiene un set de 5 Lifecycle Events, cada uno tiene asociado un set de Recipes. Los eventos son:   
-1. **Setup**    : Cuando la instancia ha terminado de bootear
-1. **Configure**: Cuando la instancia entra o sale "En Línea", Asocia/Desasocia IP a instancia, Attach/Detach ELB a un Layer. Cuando ocurre afecta a **TODAS** las instancias del Stack.
-1. **Deploy**   : Cuando se despliega la aplicación a un set de instancias.    
-1. **Undeploy** : Cuando se hace undeploy o se borra la aplicación de un grupo de instancias
-1. **Shutdown** : Antes de Terminate la instancia EC2
+	1. **Setup**    : Cuando la instancia ha terminado de bootear
+	1. **Configure**: Cuando la instancia entra o sale "En Línea", Asocia/Desasocia IP a instancia, Attach/Detach ELB a un Layer. Cuando ocurre afecta a **TODAS** las instancias del Stack.
+	1. **Deploy**   : Cuando se despliega la aplicación a un set de instancias.    
+	1. **Undeploy** : Cuando se hace undeploy o se borra la aplicación de un grupo de instancias
+	1. **Shutdown** : Antes de Terminate la instancia EC2
 - https://docs.aws.amazon.com/opsworks/latest/userguide/welcome_classic.html
 - Deployments: 
 	- Manual (Downtime)
