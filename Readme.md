@@ -2,12 +2,13 @@
 
 ## CodeCommit
 - **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
-- La política que deben tener los developers es **AWSCodeCommitPowerUser**, y restringir que suban código a master con política Deny
+- La política que deben tener los developers es **AWSCodeCommitPowerUser** (no permite crear y borrar repositorios), y restringir que suban código a master con política Deny.
 
 ## CodeBuild (buildspec.yml)
 - En la definición se elige la imagen que hará el Build: Managed (no incluyen frameworks) o Custom, recursos (VPC), etc.. Lo mínimo son 3GB y 2 vCPUs.
 - El archivo de configuración se compone de: Variables, Fases, Artefactos. 
 - En el buildspec.yml se configura el **runtime-version** ejemplo: `docker: 18`, `nodejs: latest`.
+- Se recomienda almacenar los artefactos de CodeBuild en S3, habilitar versionamiento en el Bucket.
 
 ## CodeDeploy (appspec.yml)
 - CodeDeploy permite desplegar en **EC2/Onpremise (con agente CodeDeploy), Lambda, ECS**
@@ -600,8 +601,8 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 ### CreationPolicy & UpdatePolicy
 - Si se está creando un ASG desde CloudFormation y queremos que el ASG falle si las instancias no se lanzan bien, se puedar configurar un 
 	`CreationPolicy` en el ASG, en el que le decimos por ej: que queremos esperar N Signals desde las máquinas, y sino se reciben el ASG fallaría al crearse. Los signals se envían usando el `cfn-signal` (CF bootstrap scripts) que ya se había visto 
-- Con la propiedad de CF `AutoScalingRollingUpdate`, podemos especificar cuantas instancias queremos que estén atendiendo y cuantas se van a actualizar en un ASG para poder hacer un RollingUpdate.
-- Tambien existe la propiedad de CF `AutoScalingReplacingUpdate`, acá lo que hace es crear un nuevo ASG y cuando la CreationPolicy se valida, entonces se elimina el viejo ASG
+- Con la propiedad de CF **`AutoScalingRollingUpdate`**, podemos especificar cuantas instancias queremos que estén atendiendo y cuantas se van a actualizar en un ASG para poder hacer un RollingUpdate.
+- Tambien existe la propiedad de CF **`AutoScalingReplacingUpdate`**, acá lo que hace es crear un nuevo ASG y cuando la CreationPolicy se valida, entonces se elimina el viejo ASG
 
 ## DEPLOYMENTS STRATEGIES (REVIEW)
 
@@ -886,28 +887,18 @@ Netflix "simian-army"
 
 
 ## Kinesis
-- Kinesis es una altenativa a Apache Kafka, ideal para BigData en "real-time", IoT, clickstreams
+- Kinesis es una altenativa a Apache Kafka, ideal para BigData en **"real-time"**, **IoT**, **clickstreams**
 - La Data es automaticamente replicada a 3 AZ
 - Hay 3 servicios asociados a Kinesis:
 	- **Streams**:   streaming de ingesta de baja latencia a gran escala
 	- **Analytycs**: Analisis en tiempo real de Streams usando SQL 
 	- **Firehose**: Carga de Streams hacia S3, Redshift, ElasticSearch, Splunk...
-
 - El Producer puede enviar 1 MB/s ó 1,000 mensajes de escritura POR SHARD, si no se obtiene `ProvisionedThroughputException`
 - El Consumer puede leer 2 MB/s en lectura por SHARD en todos los consumers
 - 24 Horas de retención de data por defecto, puede ser extendida a 7 días
+- CU: Analizar Logs de CW en tiempo real, para esto crear un Kinesis Subscription en CW. (También se puede hacer lo mismo con Lambda siempre con CW Logs Subscriptions)
 
-	**Kinesis Producers**: Kinesis SDK, Kinesis Producer Library KPL, Kinesis Agent, CLoudwatch Logs, Terceros (Spark, Log4j Appenders, 					Flume, Kafka Connect, )
-	**Kinesis Consumers**: Kinesis SDK, Kinesis Client Library KCL, Kinesis Connector LIbrary, Kinesis Firehose, AWS Lambda
-						Terceros (Spark, Log4j Appenders, Flume, Kafka Connect)
-- **TIP**:  
-	- Kinesis Streams
-		- Tiempo Real
-		- Custom Code (producer / consumer)
-	- Firehose
-		- Casi Tiempo Real
-		- Fully managed
-
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/69eab390-ae67-40ae-be13-8328f37ec1ed)
 
 ## AWS Amplify
 -  Se usa para construir aplicaciones Web y Mobile.
@@ -983,10 +974,5 @@ Netflix "simian-army"
 	- Apply policies at the **OU level to both the Prod and Dev** OUs to ensure **consistent enforcement** of policies across environments.
 - Systems Manager Automation `AWSSupport-TroubleshootCodeDeploy` se le manda el ID de la instancia fallida y el Deployment Id que falló y ejecuta una serie de pasos donde nos da detalles de porque falló el deployment.
 - 
-
-
-## IMÁGENES
-
-![image](https://github.com/marvindaviddiaz/aws/assets/13956614/69eab390-ae67-40ae-be13-8328f37ec1ed)
 
 
