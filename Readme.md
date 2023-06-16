@@ -228,26 +228,23 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - Se puede definir el API usando **Open API** para que AWS valide los request antes de enviarlos a los lambda. Con `x-amazon-apigateway-request-validators` se le puede indicar si queremos validar todo, ó solo el body o solo los parámetros
 
 ## OpsWorks
-- OpsWorks consta de 3 partes: OpsWorks Stack, OpsWorks for Chef Automate, OpsWorks for Puppet Enterprise
+- Hay 3 sabores: **OpsWorks Stack**, **OpsWorks for Chef Automate**, **OpsWorks for Puppet Enterprise**
 - Es para las personas que usan Chef OnPremise y luego quieren migrar a la nube y seguir usando Chef
-- Un Stack es un grupo de Layers, Instaces and AWS Resources.
-- Los tipos de Layers que se pueden crear son: **Opsworks, ECS, RDS**
+- **Stack** => **Layers** (ELB, EC2/ECS, RDS)  => **Instances** (24x7, Time = Basadas en Horarios , Load = Basadas en Carga) => **Apps**
 - **Auto Healing**: Si el agente de OpsWork no se puede comunicar con AWS en 5 minutos, la instancia es reiniciada. Con CloudwatchEvents podemos definir una regla para ser notificados.
-- Tipos de instancias:
-	- **24x7**: Instancia Normal
-	- **Time**: Permite definir horarios para levantar y bajar las instancias en base semanal.
-	- **Load**: Estas se levantan o bajan automaticamente en base a la carga (CPU, memoria, etc..) Como Autoescale pero no tan flexible
-- **Apps**: Aplicaciones que se encuentran en repositorios GIT o Http y contienen los Cheef Cookbook
-- Se pueden crear Deployments en las instancias utilizando las Apps.
-- **TIP**: AWS OpsWorks Stack Lifecycle Events:
-   Cada Layer tiene un set de 5 Lifecycle Events, cada uno tiene asociado un set de Recipes. Los eventos son:
-   
-   1. Setup    : Cuando la instancia ha terminado de bootear
-   2. Configure: Cuando la instancia entra o sale "En Línea", Asocia o Desasocia una IP a una instancia, Attach o Detach un ELB a un Layer.
-   3. Deploy   : Cuando se despliega la aplicación a un sert de instancias.    
-   4. Undeploy : Cuando se hace undeploy o se borra la aplicación de un grupo de instancias
-   5. Shutdown : Antes de Terminate la instancia EC2
-   De los 5 eventos "Configure" es el único que cuando ocurre afecta a TODAS las instancias del Stack.
+- Cada Layer tiene un set de 5 Lifecycle Events, cada uno tiene asociado un set de Recipes. Los eventos son:   
+1. **Setup**    : Cuando la instancia ha terminado de bootear
+1. **Configure**: Cuando la instancia entra o sale "En Línea", Asocia/Desasocia IP a instancia, Attach/Detach ELB a un Layer. Cuando ocurre afecta a **TODAS** las instancias del Stack.
+1. **Deploy**   : Cuando se despliega la aplicación a un set de instancias.    
+1. **Undeploy** : Cuando se hace undeploy o se borra la aplicación de un grupo de instancias
+1. **Shutdown** : Antes de Terminate la instancia EC2
+- https://docs.aws.amazon.com/opsworks/latest/userguide/welcome_classic.html
+- Deployments: 
+	- Manual (Downtime)
+	- Rolling (No Downtime, reduce capacity)
+	- Blue/Green (Usando un Stack aparte, y cambiando el routing en Route53)
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/54ab7b57-ed4c-46d5-969c-c4b6125fd95d)
+
 
 ## CloudTrail
 - El trail **puede** capturar los eventos de todas la regiones
@@ -983,12 +980,12 @@ Netflix "simian-army"
 - Al crear multi cuentas mediante AWS Organizations, una práctica recomendada es crear **una cuenta de AWS independiente para cada aplicación**. **Mejor aislamiento de los recursos**, **mayor seguridad y cumplimiento**, y **mas sencillas las políticas de acceso**, **asignación de costos** y un **presupuesto más precisos** por departamento o equipo.
 - ¿Cuál es el enfoque recomendado para aplicar políticas en AWS Organizations para gobernar los entornos de PROD y DEV?
 	- Apply policies at the **OU level to both the Prod and Dev** OUs to ensure **consistent enforcement** of policies across environments.
-
+- Systems Manager Automation `AWSSupport-TroubleshootCodeDeploy` se le manda el ID de la instancia fallida y el Deployment Id que falló y ejecuta una serie de pasos donde nos da detalles de porque falló el deployment.
+- 
 
 
 ## IMÁGENES
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/69eab390-ae67-40ae-be13-8328f37ec1ed)
-
 
 
