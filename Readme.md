@@ -403,6 +403,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 		Aplicaciones, AWS Components, Files, Configuración de Red, Windows Updates, Services, Instance Details, etc.. 
 	- El Top de aplicaciones instaladas
 	- Corre cada 30 minutos
+   	- CU: Se necesita verificar que las instancias en los ASG están al día con los parches y versión correcta de la aplicación.
 
 - **Automations**
 	- Automatiza la administración de instancias y recursos
@@ -888,6 +889,8 @@ Netflix "simian-army"
 - Se pueden definir reglas para aumentar el número de licencias.
 - Se pueden asociar AMIs a la reglas, así cuando se lancen instancias de esa AMI, se obtiene una licencia del Pool definido.
 
+## Security Hub
+- Es necesario tener habilitado Config
 
 ## Kinesis
 - Kinesis es una altenativa a Apache Kafka, ideal para BigData en **"real-time"**, **IoT**, **clickstreams**
@@ -948,6 +951,17 @@ Netflix "simian-army"
 
 <img src="https://github.com/marvindaviddiaz/aws/assets/13956614/9901d32d-48f5-4931-b71d-0b0740bda863" width="50%" height="50%">
 
+# AWS Disaster Recovery Service - DRS
+- Costo eficiente de los recursos para mantener una copia al día de los source servers en AWS
+- Alcanza RPOs de segundos y RTOs de minutos
+- Como funciona:
+	- Se configura e inicializa replicación de datos automática
+ 	- Se lanzan instancias de prueba
+  	- En caso de desastres inicia el lanzamiento de instancias de recuperación
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/a29a8836-f3c6-4767-b738-092233081015)
+
+
 ## Preguntas fallidas
 - Para setear el nombre de los artefactos en CodeBuild, se debe hacer en la **sección** de `artifacts` a nivel general. Ej: `build-$(AWS_REGION)`
 - El archivo buildspec.yml tiene **sections**, no phases.
@@ -983,6 +997,22 @@ Netflix "simian-army"
 - ¿Cuál es el enfoque recomendado para aplicar políticas en AWS Organizations para gobernar los entornos de PROD y DEV?
 	- Apply policies at the **OU level to both the Prod and Dev** OUs to ensure **consistent enforcement** of policies across environments.
 - Systems Manager Automation `AWSSupport-TroubleshootCodeDeploy` se le manda el ID de la instancia fallida y el Deployment Id que falló y ejecuta una serie de pasos donde nos da detalles de porque falló el deployment.
-- 
+- Si se quiere tener **permisos escalables** a travéz de múltiples cuentas y ambientes (dev,test, prod) y que sigan el principio least-privelege? Se debe usar acceso **atribute-based** en lugar de **role-based**, se les coloca tag a los recursos basados en los ambientes en los que están y se le agregar esos tags también a los usuarios.
+- **Highly Available** = Recuperación en pocos segundos
+- **Fault Tolerant** = No se notan los fallos al perder un componente
+- VPC Peering es más barato que Transit Gateway, pero Transit Gateway es más simple a escala.
+- Se necesita asegurarse que todas las instancias de **ASG suban sus logs a S3** antes de **Terminate**? **Lyfecycle Hooks: Terminating: Wait**
+- Si queremos ser notificados cuando un Failover pase en RDS Multi AZ? La **forma más simple** es usando **RDS Event Notifications**
+
+
+## Imágenes
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/68562e91-30fd-401f-aec8-3332020c6029)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/d993054d-30d5-4f07-9f35-efe6e67ab750)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/25f59ea0-1e80-46a9-99b2-9b54a4647087)
+
+
 
 
