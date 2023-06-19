@@ -938,6 +938,7 @@ Netflix "simian-army"
 	- **Fargate**: Serverless
 - Container Storage Interface (CSI) soporta: **EBS, EFS, FSx for Lustre, FSx for NetApp ONTAP**
 - Se puede configurar el ControlPlane para activar el Logging y enviarlo a Cloudwatch Logs. Para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
+- Del más sencillo al mas customizable: **App Runner  ==> Fargate ==> Kubernetes**
 
 ## AWS GLOBAL ACCELERATOR
 
