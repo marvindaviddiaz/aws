@@ -1022,6 +1022,13 @@ Netflix "simian-army"
 - VPC Peering es más barato que Transit Gateway, pero Transit Gateway es más simple a escala.
 - Se necesita asegurarse que todas las instancias de **ASG suban sus logs a S3** antes de **Terminate**? **Lyfecycle Hooks: Terminating: Wait**
 - Si queremos ser notificados cuando un Failover pase en RDS Multi AZ? La **forma más simple** es usando **RDS Event Notifications**
+- En **ECS - AfterAllowTestTraffic** se puede especificar funciones de Lambda que pueden validar el deploy mediante el tráfico de prueba en y si fallan se hace rollback
+- Implementar Cross-region replication en s3:
+	- En la cuenta de AWS de **origen**, cree un **rol** de IAM que **S3 pueda asumir para replicar** objetos. Habilite el **versioning en ambos buckets**.
+ 	- Cree un **bucket policy** en el bucket de **destino** que **permita** al bucket de **origen replicar** objetos.
+  	- Configure una **regla de replicación** en el bucket de **origen** para activar el **proceso de replicación**.
+- No se actualiza la imagen cuando se usa latest:
+	- Add `--force-new-deployment` option to the AWS CLI command so that ECS re-deploys your cluster pulling the new image.
 
 
 ## Imágenes
