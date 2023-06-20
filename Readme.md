@@ -940,6 +940,24 @@ Netflix "simian-army"
 - Se puede configurar el ControlPlane para activar el Logging y enviarlo a Cloudwatch Logs. Para enviar el de los nodos o containers se debe instalar el Cloudwatch Agent y/ó usar Fluentd
 - Del más sencillo al mas customizable: **App Runner  ==> Fargate ==> Kubernetes**
 
+## AWS Application Repository
+- Almacena aplicaciones serverless (SAM templates)
+
+## AWS App2Container
+- Herramienta de línea de comando para migrar aplicaciones **OnPremise legacy Java y .NET** a contenedores para luego desplegar en ECS, EKS ó Fargate
+
+## AWS Copilot
+- Herramienta de línea de comando para lanzar aplicaciones basadas en contenedores a AWS (ECS, Fargate, App Runner)
+- Se diferencia de App2Container, que Copilot no solo es para Java y .Net
+
+# AWS Compute Optimizer
+- Usa ML para dar recomendaciones de optimización para: EC2, EBS, ECS Fargate, Lambda
+
+## Prometheus Grafana
+- Amazon Managed Service for Prometheus - AMP
+- Amazon Managed Grafana
+
+
 ## AWS GLOBAL ACCELERATOR
 
 - AWS Global Accelerator is a service that improves the availability and performance of applications by using a global network of AWS edge locations. It allows you to route traffic to healthy endpoints in multiple Regions and ensures high availability and low latency by automatically directing traffic to the optimal endpoint based on health, geography, and routing policies. Deploying the application in multiple Availability Zones in each Region (also known as an active/active implementation) provides redundancy and ensures that the application remains available to users in case of a disaster affecting one Region.
@@ -963,7 +981,7 @@ Netflix "simian-army"
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/a29a8836-f3c6-4767-b738-092233081015)
 
 
-## Preguntas fallidas
+## TIPS
 - Para setear el nombre de los artefactos en CodeBuild, se debe hacer en la **sección** de `artifacts` a nivel general. Ej: `build-$(AWS_REGION)`
 - El archivo buildspec.yml tiene **sections**, no phases.
 - Si piden que la configuración de deployment tenga al menos **5 máquinas de 20 siempre activas**, no usar porcentajes (25%), si no cantidad fija, porque si escala para abajo el porcentaje hará que el número de instancias baje a menos de 5 requeridas.
@@ -1014,6 +1032,7 @@ Netflix "simian-army"
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/25f59ea0-1e80-46a9-99b2-9b54a4647087)
 
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/9619825a-6acd-48ca-904e-4ff343458ae1)
 
 
 
