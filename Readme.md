@@ -1032,7 +1032,10 @@ Netflix "simian-army"
 - Correr documentos almacenados en github usando Systems manager? Cree un documento de Systems Manager que utilice `aws:downloadContent` y `aws:runDocument`. Especifique GitHub como `sourceType` y la ruta.
 - Un **Service Catalog launch constraint** especifica el rol de IAM que asume ServiceCatalog cuando un usuario final lanza un producto. Sin esto, los usuarios finales tendrían que tener acceso a CF, los servicios del template y a ServiceCatalog.
 - No se puede usar Step Functions directamente junto con AWS Config
-- 
+- Desacoplar la BD de Beanstalk:
+	-  Decouple the Amazon RDS instance from your Elastic Beanstalk environment using the blue/green deployment strategy to decouple. Take an RDS DB snapshot of the database and enable deletion protection. Set up a new Elastic Beanstalk environment with the necessary information to connect to the Amazon RDS instance. Before terminating the old Elastic Beanstalk environment, remove its security group rule first before proceeding.
+ -  Cuando se actualiza a una **major version** una RDS Multi-AZ, la instancia **primaria y secundaria** se **actualizan** al **mismo tiempo** pudiendo haber **downtime**. Por eso antes de actualizar se recomienda primero lanzar una **Read Replica**, para que la aplicación al menos pueda hacer lecturas, minimizando el downtime.
+ -  
 
 ## Imágenes
 
@@ -1044,5 +1047,6 @@ Netflix "simian-army"
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/9619825a-6acd-48ca-904e-4ff343458ae1)
 
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/152058ab-406e-4304-ade4-29859dc3e9da)
 
 
