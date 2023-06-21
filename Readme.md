@@ -1034,7 +1034,7 @@ Netflix "simian-army"
 - No se puede usar Step Functions directamente junto con AWS Config
 - Desacoplar la BD de Beanstalk:
 	-  Decouple the Amazon RDS instance from your Elastic Beanstalk environment using the blue/green deployment strategy to decouple. Take an RDS DB snapshot of the database and enable deletion protection. Set up a new Elastic Beanstalk environment with the necessary information to connect to the Amazon RDS instance. Before terminating the old Elastic Beanstalk environment, remove its security group rule first before proceeding.
- -  Cuando se actualiza a una **major version** una RDS Multi-AZ, la instancia **primaria y secundaria** se **actualizan** al **mismo tiempo** pudiendo haber **downtime**. Por eso antes de actualizar se recomienda primero lanzar una **Read Replica**, para que la aplicación al menos pueda hacer lecturas, minimizando el downtime.
+ -  Cuando se actualiza a una **major version** una RDS Multi-AZ, la instancia **primaria y secundaria** se **actualizan** al **mismo tiempo** causando **downtime**. Por eso antes de actualizar se recomienda primero lanzar una **Read Replica**, para que la aplicación al menos pueda hacer lecturas, minimizando el downtime.
  -  
 
 ## Imágenes
