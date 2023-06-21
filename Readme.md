@@ -1029,7 +1029,10 @@ Netflix "simian-army"
   	- Configure una **regla de replicación** en el bucket de **origen** para activar el **proceso de replicación**.
 - No se actualiza la imagen cuando se usa latest:
 	- Add `--force-new-deployment` option to the AWS CLI command so that ECS re-deploys your cluster pulling the new image.
-
+- Correr documentos almacenados en github usando Systems manager? Cree un documento de Systems Manager que utilice `aws:downloadContent` y `aws:runDocument`. Especifique GitHub como `sourceType` y la ruta.
+- Un **Service Catalog launch constraint** especifica el rol de IAM que asume ServiceCatalog cuando un usuario final lanza un producto. Sin esto, los usuarios finales tendrían que tener acceso a CF, los servicios del template y a ServiceCatalog.
+- No se puede usar Step Functions directamente junto con AWS Config
+- 
 
 ## Imágenes
 
