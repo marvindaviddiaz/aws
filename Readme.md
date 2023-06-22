@@ -572,8 +572,7 @@ Otra opción importante es `Scale In Protection` a una instancia de un ASG se le
 	Pending ----> In Service  ......  Terminating ----> Terminated
   Don están las flechas entran 2 estados más `Wait` y `Proceed`. Wait se queda esperando hasta que se le confirme que puede Proceder ó no.
 	`aws autoscaling complete-lyfecycle-action ...`
-
-- Se puede crear desde la consolta de ASG ó desde Cloudwatch Events
+- Se puede crear desde la consola de ASG ó desde Cloudwatch Events
 
 - CUs:
 	- Instalar o configurar software cuando se lanza una instancia.
@@ -1034,8 +1033,15 @@ Netflix "simian-army"
 - No se puede usar Step Functions directamente junto con AWS Config
 - Desacoplar la BD de Beanstalk:
 	-  Decouple the Amazon RDS instance from your Elastic Beanstalk environment using the blue/green deployment strategy to decouple. Take an RDS DB snapshot of the database and enable deletion protection. Set up a new Elastic Beanstalk environment with the necessary information to connect to the Amazon RDS instance. Before terminating the old Elastic Beanstalk environment, remove its security group rule first before proceeding.
- -  Cuando se actualiza a una **major version** una RDS Multi-AZ, la instancia **primaria y secundaria** se **actualizan** al **mismo tiempo** causando **downtime**. Por eso antes de actualizar se recomienda primero lanzar una **Read Replica**, para que la aplicación al menos pueda hacer lecturas, minimizando el downtime.
- -  
+- Cuando se actualiza a una **major version** una RDS Multi-AZ, la instancia **primaria y secundaria** se **actualizan** al **mismo tiempo** causando **downtime**. Por eso antes de actualizar se recomienda primero lanzar una **Read Replica**, para que la aplicación al menos pueda hacer lecturas, minimizando el downtime.
+ - Formas de **notificar las recomendaciones de Trusted Advisor**:
+ 	- Use CloudWatch Events to monitor Trusted Advisor checks and set a trigger to send an email using SNS to notify you about the results of the check.
+  	- Lambda function that runs daily to refresh AWS Trusted Advisor via API and send results to CloudWatch Logs. Create a CloudWatch Log metric and have it send an alarm notification when triggered.
+   	- Lambda function that runs daily to refresh AWS Trusted Advisor via API and then publish a message to an SNS Topic to notify the subscribers based on the results. 
+- El campo `initiated_by` de un evento de eventbridge disparado por OpsWorks, puede contener: `user, auto-scaling, auto-healing`
+- Las Custom Remediation Actions en Config deben usarse junto con los documentos de automatización de AWS Systems Manager.
+- Se puede configurar un **pipeline** para que use **cross-region actions** para que el **build y deployment** se corran en **otras regiones**.
+- AWS CodeBuild supports webhooks when the source repository is GitHub
 
 ## Imágenes
 
