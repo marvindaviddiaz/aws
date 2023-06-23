@@ -13,7 +13,8 @@
 ## CodeDeploy (appspec.yml)
 - CodeDeploy permite desplegar en **EC2/Onpremise (con agente CodeDeploy), Lambda, ECS**
 - **Deployments Groups**: Son grupos de instancias ó ASG donde se harán los Deploys, **Si son instancias  se tiene que elegir por medio de Tags**
-- **Hooks**: Pasos de cada etapa del Deploy: **ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService**. Varían según el tipo de aplicación y el tipo de Despliegue: BlueGreen, In-place, etc.. 
+- **Hooks**: Pasos de cada etapa del Deploy: **ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService**. Varían según el tipo de aplicación y el tipo de Despliegue: BlueGreen, In-place, etc..
+- CodeDeploy permite crear triggers para deployments fallidos, se puede llamar a SNS.
 
 ### Deployment Configurations: 
 - Donde se define el tipo de Deployment, **para EC2** tenemos los siguientes:
@@ -1042,6 +1043,30 @@ Netflix "simian-army"
 - Las Custom Remediation Actions en Config deben usarse junto con los documentos de automatización de AWS Systems Manager.
 - Se puede configurar un **pipeline** para que use **cross-region actions** para que el **build y deployment** se corran en **otras regiones**.
 - AWS CodeBuild supports webhooks when the source repository is GitHub
+
+## TIPS
+- `CodeBuild Report Group` es una sección del buildspec que permite publicar y mostrar los resultados de las pruebas de una compilación de CodeBuild:
+`reports:    ... 	base-directory: 'surefire/target/surefire-reports'`
+- Aplicar reglas WAF dieferentes para las cuentas de la organizacion:
+	- Configurar AWS Config para cada combinación de Región y cuentas en donde WAF se va a usar. (Requerido habilitar Config parausar políticas de seguridad de Firewall Manager)
+ 	- Crear OUs y asociar las cuentas a esas OUs, antes de crear una política de Firewall Manager para cada OU.
+  	- En Firewall Manager, crear las políticas de WAF que se aplicaran a cada OU
+- Se necesita aplicar un límite en en la tasa peticiones usando WAF web ACL. El límite debe ser mayor para solicitudes de clientes internos que para solicitudes de clientes externos.
+	- Crear un Set de IPs en WAF que contiene las direcciones de los clientes internos. Crear una regla que haga match con esas IPs y colocarles un label INTERNAL.
+ 	- Crear una Regla `rate-based` para los clientes internos usando el label INTERNAL (usando scope-down statement, el scope-down statement garantiza que el tráfico se evaluará primero contra este statement)
+  	- Crear una Regla `rate-based` para los clientes externos que no tengan el label INTERNAL.
+- Dar acceso al team al OU de DEV sin que puedan modificar permisos IAM, usando AD Connector.
+	- Asegurarse de que esté habilitado Identity Center (AWS SSO) en la cuenta Management.
+ 	- Seleccionar el AD Connector como Identity Store (self-managed Active Directory)
+  	- Crear un PermisionSet que use la política PowerUserAccess, asignar el PermisionSet al grupo DEV de AD en Identity Center
+  	- Conectar el grupo de AD Dev al OU de DEV.
+- Correr un bash script después que la aplicación ha sido desplegada en Elastic Beanstalk:
+	- Crear un archivo **.config** en la carpeta **.ebsextensions**. Dentro del nuevo archivo en la sección de **files** colocar la ruta el archivo bash y colocar el contenido del script.
+ 	- La ruta configurada del paso anterior debe ser ser `elasticbeanstalk/hooks/appdeploy/post` en esta ruta AppDeploy va a correr el escript despues de hacer el deploy.
+	- https://onica.com/blog/how-to/appdeploy-filesystem-hook/
+- CU: Reiniciar máquina antes de que aws le haga mantenimiento:
+	- Crear regla EventBridge que haga match con el evento `scheduledChange`, de "Amazon EC2" de "AWS Health". Configurar la regla para correr `RestartEC2Instance` Automation runbook.
+- Para Monitorear una IP en GuardDty y obtener Findings, se debe crear un **Threat List** en GuarDuty colocando las IPs o rangos que se necesiten. 
 
 ## Imágenes
 
