@@ -1066,7 +1066,8 @@ Netflix "simian-army"
 	- https://onica.com/blog/how-to/appdeploy-filesystem-hook/
 - CU: Reiniciar máquina antes de que aws le haga mantenimiento:
 	- Crear regla EventBridge que haga match con el evento `scheduledChange`, de "Amazon EC2" de "AWS Health". Configurar la regla para correr `RestartEC2Instance` Automation runbook.
-- Para Monitorear una IP en GuardDty y obtener Findings, se debe crear un **Threat List** en GuarDuty colocando las IPs o rangos que se necesiten. 
+- Para Monitorear una IP en GuardDty y obtener Findings, se debe crear un **Threat List** en GuarDuty colocando las IPs o rangos que se necesiten.
+- 
 
 ## Imágenes
 
