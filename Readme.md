@@ -79,6 +79,7 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - Los tipo **Workers** crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
 - Cuando se unsa EB Cli los valores especificados en el comando tiene prioridad a los archivos .ebextensions
 - La BD debe crearse como parte del ambiente de Beanstalk ó por aparte, dependiendo si se quiere que la BD forme parte del mismo ciclo de vida de la aplicación de Beanstalk, ya que si queremos conservar la BD aunque se elimine el ambiente lo mejor es crear la BD por separado.
+- Elastic Beanstalk no reemplaza automáticamente las instancias en las que la aplicación haya fallado. De forma predeterminada, Elastic Beanstalk usa HealtCheck de TCP de ELB.
 
 - **Deployments**
 	1. **All at once**: Es la forma más rápida, pero hay downtime 
@@ -91,6 +92,10 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 - Automatizar la creación, mantenimientoy validación de AMIs o Container Images, puede publicar AMIs a multiples regiones y cuentas.
 - Con **AWS RAM** (Resource Access Manager) se pueden compartir Images, Recipes, Components a otras cuentas
 - Se recomienda almacenar el AMI ID en SSM Parameter Store, para que los templates de CF tengan siempre la última versión de las AMIs
+
+# ECR
+- Tiene **Lyfecycle Policies** para expirar imagenes por edad ó cantidad
+- Tiene **Repository Policies** para dar permisos inclusive a otras cuentas
 
 ## ECS
 - Las instancias corren el agente de ECS y usan una AMI especial para ECS, el agente es un contenedor de docker
@@ -917,6 +922,7 @@ Netflix "simian-army"
 - Para migrar DBs a hacia AWS / OnPremise, resilient, self healing
 - Migraciones Homogeneas y Heterogeneas
 - La tarea de migración se ejecuta en una EC2
+- Soporta MultiAZ creando una instancia en standby en otra AZ para failover.
 - Como Source y Target se puede usar RDS, S3, DocumentDB, OpenSearch, Redshift, Kafka, Neptune, Redis... 
 - Para hacer la conversión entre diferentes motores se usa el **Schema Conversion Tool SCT** (si se usa el mismo motor no es necesario). Ej:
 	- SQL Server -> Mysql
@@ -1067,7 +1073,79 @@ Netflix "simian-army"
 - CU: Reiniciar máquina antes de que aws le haga mantenimiento:
 	- Crear regla EventBridge que haga match con el evento `scheduledChange`, de "Amazon EC2" de "AWS Health". Configurar la regla para correr `RestartEC2Instance` Automation runbook.
 - Para Monitorear una IP en GuardDty y obtener Findings, se debe crear un **Threat List** en GuarDuty colocando las IPs o rangos que se necesiten.
-- 
+- Se puede crear regla de EventBridge que coincidan con un evento específico de CloudTrail, como **EC2 RevokeSecurityGroupIngress**, para invoicar un Lambda para para volver a agregar la regla que se quitó del security Group.
+- Limitar el número de versiones de docker images en ECR?
+	- **ECR Lifecycle policies** pueden hacer que caduquen las imágenes mediante el uso de reglas que se basan en la antigüedad o cantidad.
+- Para habilitar SSE-S3 casi en tiempo real en cualquier bucket que no tenga habilitado SSE-S3?
+	- Usar config y en remediaton action usar EnableS3BucketEncryption runbook, el Automation runbook debe tener configurado un rol con permisos.
+- Kinesis Data Firehose no puede escribir directo a Athena, primero se puede exportar a S3 y luego ya cargarla en Athena.
+- Aurora Global Database = BD multi Región
+- XRAY Granular monitoring = Segments and SubSegments
+- Lambda admite **extensiones internas y externas**. Una extensión externa se ejecuta como un proceso independiente en el entorno de ejecución y continúa ejecutándose después de que la invocación de la función se haya procesado por completo. Una extensión interna se ejecuta como parte del proceso de tiempo de ejecución (JAVA_TOOL_OPTIONS)
+- Implementar una solución para que las intancias usen Instance Metadata v2?
+	- Crear regla en Config que detecte si las instancias están usando IMDSv2, setear un Remediation para correr **EnforceEC2InstanceIMDSv2**
+- Las **versiones** de la aplicación estén configuradas de manera **consistente** en todas las instancias sin crear nuevos entornos? **Immutable**
+- El uso de **Template Constraints** a nivel de **Service Catalog** proporciona acceso restringido a los templates para usuarios principiantes.
+- **CodeDeploy no puede desplegar en Service Catalog**, para desplegar productos de ServiceCatalog en un Pipeline se debe invocar un Lambda que verifique y haga el push de las nuevas versiones de los productos.
+- Se puede utilizar Firewall Manager para aplicar grupos de reglas de WAF en varias cuentas de AWS. Las políticas de Firewall Manager para AWS WAF pueden dirigirse a organizaciones enteras, OUs específicas o una lista de cuentas de AWS. Las políticas de Firewall Manager para AWS WAF también pueden apuntar a ALB.
+	- Se necesita aplicar Reglas de WAF ACLs a todos los ALB de la organización, incluyendo los futuros?
+		- Habilitar Config en todas las cuentas,
+	 	- Configurar Firewall Manager en la Organización, En el Firewall manager de la cuenta Administrador crear un **WAF Policy**.
+	  	- Habilitar remediaciones automáticas y definir la web ACL.
+	  	- Configurar el scope de la política a todos los ALB de la organización.
+ - Implementar una solución que enrute todas las peticiones por CloudFront y bloquear peticiones en función del contenido de las solicitudes, como headers o el body.
+ 	- Crear una Web ACL de WAF y asociarla con la distribución de CloudFront, crear reglas para cada tipo de trafico que se desee bloquear
+  	- Crear reglas en el ALB Listener, configurar las reglas para permitir o rechazar tráfico basado en custom headers predefinidos. (Se puede configurar CloudFront agregando headers personalizados a los request que CloudFront envía al ALB)
+- Usar en conjunto Config Rule: `iam-user-unused-credentials-check`  y la automatization: `RevokeUnusedIAMUserCredentials`
+- Más de dos `stream readers` de dynamo pueden causar throttling. Se recomienda tenerun lambda que lea y ese lambda puede enviar a un **SNS Topic** ó a un **EventBridge Bus**
+- Reducir el tiempo de Cloudformation StackSets cuando son muchas cuentas:
+	- Setear **Parallel Concurrency**
+ 	- Setear a un porcentaje alto el **Maximun Concurrent Accounts**
+- El AutoHealing de Opsworks no reemplaza las instancias, las reinicia.
+- Para exportar Logs de CW a S3: Usar Lambda para que lo haga, El bucket tenga habilitado **SSE-S3**, y el Bucket debe estar **en la misma región** que el LogGroup.
+- En una SCP se debe tomar en cuenta que IAM es un servicio global, por lo que se debe hacer una exclusión, ya que si se bloquea por región no se permitirá usar el servicio. (ver imagen)
+- Usar CodeCommit con SSH:
+	- Subir las SSH Public Keys en el tabl de Credenciales de IAM User
+ 	- Crear un IAM Policy para permitir a los developers CodeCommit:GitPush CodeCommit:GitPull al repositorio
+- El StackSet falla al ejecutarse en las Member Accounts, desde la cuenta Administradora que fue delegada:
+	- Verificar que la cuenta administradora delegada tiene un TrustRelationship con la cuenta destino.
+ 	- Asegurarse que CF template crea **recursos únicos globales** (como el nombre de los buckets)
+- Compartir un Transit Gateway con AWS RAM en la organización. El recurso no está en la cuenta principal.
+   - Dentro de la **cuenta maestra(Management)** de la organización, **habilitar el resource sharing** a nivel de la organización (no importa que el recurso a compartir esté en otra cuenta)
+   - Crear un **Resource Share** utilizando **AWS RAM** en la **misma cuenta donde está el recurso** que necesita compartir y proveer el **ID de la Organización** como principal (También se puede especificar un OU, depende el CU)
+- Identificar Lambdas que estén corriendo Runtimes EOL (end-of-life): Usar El Evento de **AWS Health** asociado con EOL runtimes.
+- Notificar si la instancia trata de usar mas ancho de banda que lo disponible por el tipo de instancia?
+	- Usar el Agende de CW y exportar la métrica **bw_out_allowance_exceeded** por **cada instancia** (si haymuchas instancias automatizar para crear la alarma usando un Lambda)
+- Analizar archivos JSON en un Bucket que tiene archivos JSON y CSV:
+	- Crear un segundo bucket
+ 	- Crear un S3 **Batch Operation Job** diario que mueva los archivos JSON del bucket original al nuevo bucket
+  	- Configurar el segundo Bucket como Data Source para Athena.
+  	- Calendarizar un AWS Glue Crawler que corra a diario en el segundo Bucket
+  	- Correr queries en Athena directamente en el segundo bucket.
+- Se necesita generar una lista de los nodos que contienen un archivo en específico:
+	- Configurar SSM para crear un Inventory Custom desde un script que scanee los nodos buscando el archivo.
+ 	- Usar el **Resource Data Sync** para exportar los hallazgos a un Bucket S3
+  	- Usar Athena para filtrar los resultados.
+- Migrar repositorio a CodeCommit sin perder el history:
+	- Crear Repositorio en CodeCommit
+ 	- Clonar el repositorio al ambiente local usar el argumento **mirror** (Con mirror sobrescribirá el repositorio remoto con los branches locales)
+  	- Hacer push a CodeCommit
+- Compartir librerías a las cuentas de la organización:
+	- Crear un dominio en CodeArtifact
+ 	- Para cada package crear un repositorio en el dominio
+  	- Configurar un Domain Policy para las member accounts.
+  	- Configurar CodeBuild para publicar las librerias a CodeArtifact en pa fase post-build
+- Una compañia grande quiere incorporar a una compañia pequeña en AWS Oganizations con el mínimo impacto, la compañia grande usa ControlTower, ambas usan Config:
+	- Crear un AWS Config Conformance Pack que contenga las politiccas que tiene la compañía grande, para determinar el impacto de ControlTower en la migración.
+ 	- Borrar el Configuration Recorder y el Config Conformace pack de la cuenta pequeña (para que use después el de la organización)
+  	- Crear un `AWSControlTowerExecution` Role en la cuenta de la compañía pequeña. (El rol debe tener un trust relationship)
+  	- Proveer el email, nombre y apellido del dueño de la cuenta para completar el proceso de enrolamiento de **AWS Control Tower Account Factory** 
+- Los eventos de inicio de sesión de usuario de IAM se registran solo en us-east-1 en CloudTrail
+- **Gateway VPC endpoints** are supported for only Amazon S3 and Amazon DynamoDB. No confundir **Interface VPC Endpoint** con **Gateway VPC Endpoint**
+- Montar EFS en una instancia limitando el path donde deberá montarse: /data/application-b
+	- Crear un **EFS access point** para la aplicación B con el root directory apuntando a /data/application-b. Setear los permisos a 0755
+ 	- Configurar un **File System Policy** para permitir al rol de la instancia escribir y leer al file system, incluyendo la condición que solo pueda accesar usando el **access point** creado. (Access points son puntos de entrada específicos de la aplicación al EFS y brindan a los clientes acceso a un directorio o subdirectorio específico en el sistema de archivos)
+
 
 ## Imágenes
 
@@ -1081,4 +1159,5 @@ Netflix "simian-army"
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/152058ab-406e-4304-ade4-29859dc3e9da)
 
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/df1c5f01-b912-4a73-a61b-9c0f0c793cec)
 
