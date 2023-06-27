@@ -1146,6 +1146,8 @@ Netflix "simian-army"
 	- Crear un **EFS access point** para la aplicación B con el root directory apuntando a /data/application-b. Setear los permisos a 0755
  	- Configurar un **File System Policy** para permitir al rol de la instancia escribir y leer al file system, incluyendo la condición que solo pueda accesar usando el **access point** creado. (Access points son puntos de entrada específicos de la aplicación al EFS y brindan a los clientes acceso a un directorio o subdirectorio específico en el sistema de archivos)
 - Para usar EFS CrossAccount, se necesita una VPC Peering o VPC Transit Gateway para conectar las VPC.
+- https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html
+- 
 
 
 ## Imágenes
@@ -1166,3 +1168,4 @@ Netflix "simian-army"
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/f536955d-da17-4462-963c-546ea6371913)
 
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/19982604-c183-4c7f-80b9-cb5d62f6417a)
