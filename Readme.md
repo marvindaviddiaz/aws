@@ -1031,7 +1031,6 @@ Netflix "simian-army"
 - No se actualiza la imagen cuando se usa latest:
 	- Add `--force-new-deployment` option to the AWS CLI command so that ECS re-deploys your cluster pulling the new image.
 - Correr documentos almacenados en github usando Systems manager? Cree un documento de Systems Manager que utilice `aws:downloadContent` y `aws:runDocument`. Especifique GitHub como `sourceType` y la ruta.
-- Un **Service Catalog launch constraint** especifica el rol de IAM que asume ServiceCatalog cuando un usuario final lanza un producto. Sin esto, los usuarios finales tendrían que tener acceso a CF, los servicios del template y a ServiceCatalog.
 - No se puede usar Step Functions directamente junto con AWS Config
 - Desacoplar la BD de Beanstalk:
 	-  Decouple the Amazon RDS instance from your Elastic Beanstalk environment using the blue/green deployment strategy to decouple. Take an RDS DB snapshot of the database and enable deletion protection. Set up a new Elastic Beanstalk environment with the necessary information to connect to the Amazon RDS instance. Before terminating the old Elastic Beanstalk environment, remove its security group rule first before proceeding.
@@ -1053,16 +1052,17 @@ Netflix "simian-army"
  	- Crear OUs y asociar las cuentas a esas OUs.
   	- En Firewall Manager, crear las políticas de WAF que se aplicaran a cada OU
 - Se necesita aplicar un límite en en la tasa peticiones usando WAF web ACL. El límite debe ser mayor para solicitudes de clientes internos que para solicitudes de clientes externos.
-	- Crear un Set de IPs en WAF que contiene las direcciones de los clientes internos. Crear una regla que haga match con esas IPs y colocarles un label INTERNAL.
- 	- Crear una Regla `rate-based` para los clientes internos usando el label INTERNAL (usando scope-down statement, el scope-down statement garantiza que el tráfico se evaluará primero contra este statement)
+	- Crear un Set de IPs en WAF que contiene las direcciones de los clientes internos.
+ 	- Crear una regla que haga match con esas IPs y colocarles un label INTERNAL.
+ 	- Crear una Regla `rate-based` usando el label INTERNAL (usando scope-down statement, scope-down statement garantiza que el tráfico se evaluará primero contra este statement)
   	- Crear una Regla `rate-based` para los clientes externos que no tengan el label INTERNAL.
 - Dar acceso al team al OU de DEV sin que puedan modificar permisos IAM, usando AD Connector.
 	- Asegurarse de que esté habilitado Identity Center (AWS SSO) en la cuenta Management.
  	- Seleccionar el AD Connector como Identity Store (self-managed Active Directory)
   	- Crear un PermisionSet que use la política PowerUserAccess, asignar el PermisionSet al grupo DEV de AD en Identity Center
-  	- Conectar el grupo de AD Dev al OU de DEV.
+  	- Conectar el grupo de DEV AD al DEV OU.
 - Correr un bash script después que la aplicación ha sido desplegada en Elastic Beanstalk:
-	- Crear un archivo **.config** en la carpeta **.ebsextensions**. Dentro del nuevo archivo en la sección de **files** colocar la ruta el archivo bash y colocar el contenido del script.
+	- Crear un archivo **.config** en la carpeta **.ebsextensions**. En la sección del yaml **files** definir el archivo bash.
  	- La ruta configurada del paso anterior debe ser ser `elasticbeanstalk/hooks/appdeploy/post` en esta ruta AppDeploy va a correr el escript despues de hacer el deploy.
 	- https://onica.com/blog/how-to/appdeploy-filesystem-hook/
 - CU: Reiniciar máquina antes de que aws le haga mantenimiento:
@@ -1072,7 +1072,7 @@ Netflix "simian-army"
 - Limitar el número de versiones de docker images en ECR?
 	- **ECR Lifecycle policies** pueden hacer que caduquen las imágenes mediante el uso de reglas que se basan en la antigüedad o cantidad.
 - Para habilitar SSE-S3 casi en tiempo real en cualquier bucket que no tenga habilitado SSE-S3?
-	- Usar config y en remediaton action usar EnableS3BucketEncryption runbook, el Automation runbook debe tener configurado un rol con permisos.
+	- Usar config y en remediaton action usar `EnableS3BucketEncryption` runbook, el Automation runbook debe tener configurado un rol con permisos.
 - Kinesis Data Firehose no puede escribir directo a Athena, primero se puede exportar a S3 y luego ya cargarla en Athena.
 - Aurora Global Database = BD multi Región
 - XRAY Granular monitoring = Segments and SubSegments
@@ -1080,19 +1080,20 @@ Netflix "simian-army"
 - Implementar una solución para que las intancias usen Instance Metadata v2?
 	- Crear regla en Config que detecte si las instancias están usando IMDSv2, setear un Remediation para correr **EnforceEC2InstanceIMDSv2**
 - Las **versiones** de la aplicación estén configuradas de manera **consistente** en todas las instancias sin crear nuevos entornos? **Immutable**
-- El uso de **Template Constraints** a nivel de **Service Catalog** proporciona acceso restringido a los templates para usuarios principiantes.
+- Un **Service Catalog launch constraint** especifica el rol de IAM que asume ServiceCatalog cuando un usuario final lanza un producto. Sin esto, los usuarios finales tendrían que tener acceso a CF, los servicios del template y a ServiceCatalog.
 - **CodeDeploy no puede desplegar en Service Catalog**, para desplegar productos de ServiceCatalog en un Pipeline se debe invocar un Lambda que verifique y haga el push de las nuevas versiones de los productos.
 - Se puede utilizar Firewall Manager para aplicar grupos de reglas de WAF en varias cuentas de AWS. Las políticas de Firewall Manager para AWS WAF pueden dirigirse a organizaciones enteras, OUs específicas o una lista de cuentas de AWS. Las políticas de Firewall Manager para AWS WAF también pueden apuntar a ALB.
-	- Se necesita aplicar Reglas de WAF ACLs a todos los ALB de la organización, incluyendo los futuros?
-		- Habilitar Config en todas las cuentas,
-	 	- Configurar Firewall Manager en la Organización, En el Firewall manager de la cuenta Administrador crear un **WAF Policy**.
-	  	- Habilitar remediaciones automáticas y definir la web ACL.
-	  	- Configurar el scope de la política a todos los ALB de la organización.
- - Implementar una solución que enrute todas las peticiones por CloudFront y bloquear peticiones en función del contenido de las solicitudes, como headers o el body.
+- Se necesita aplicar Reglas de WAF ACLs a todos los ALB de la organización, incluyendo los futuros?
+	- **Habilitar Config** en todas las cuentas,
+	- **Configurar Firewall Manager en la Organización**,
+ 	- En el Firewall manager de la cuenta Administrador crear un **WAF Policy**.
+	- Habilitar remediaciones automáticas y definir la web ACL.
+	- Configurar el scope de la política a todos los ALB de la organización.
+- Implementar una solución que enrute todas las peticiones por CloudFront y bloquear peticiones en función del contenido de las solicitudes, como headers o el body.
  	- Crear una Web ACL de WAF y asociarla con la distribución de CloudFront, crear reglas para cada tipo de trafico que se desee bloquear
   	- Crear reglas en el ALB Listener, configurar las reglas para permitir o rechazar tráfico basado en custom headers predefinidos. (Se puede configurar CloudFront agregando headers personalizados a los request que CloudFront envía al ALB)
 - Usar en conjunto Config Rule: `iam-user-unused-credentials-check`  y la automatization: `RevokeUnusedIAMUserCredentials`
-- Más de dos `stream readers` de dynamo pueden causar throttling. Se recomienda tenerun lambda que lea y ese lambda puede enviar a un **SNS Topic** ó a un **EventBridge Bus**
+- Más de dos `stream readers` de dynamo pueden causar throttling. Se recomienda tener un lambda que lea y ese lambda puede enviar a un **SNS Topic** ó a un **EventBridge Bus**
 - Reducir el tiempo de Cloudformation StackSets cuando son muchas cuentas:
 	- Setear **Parallel Concurrency**
  	- Setear a un porcentaje alto el **Maximun Concurrent Accounts**
@@ -1105,7 +1106,7 @@ Netflix "simian-army"
 - El StackSet falla al ejecutarse en las Member Accounts, desde la cuenta Administradora que fue delegada:
 	- Verificar que la cuenta administradora delegada tiene un TrustRelationship con la cuenta destino.
  	- Asegurarse que CF template crea **recursos únicos globales** (como el nombre de los buckets)
-- Compartir un Transit Gateway con AWS RAM en la organización. El recurso no está en la cuenta principal.
+- Compartir un Transit Gateway con AWS RAM en la organización (El recurso no está en la cuenta principal)
    - Dentro de la **cuenta maestra(Management)** de la organización, **habilitar el resource sharing** a nivel de la organización (no importa que el recurso a compartir esté en otra cuenta)
    - Crear un **Resource Share** utilizando **AWS RAM** en la **misma cuenta donde está el recurso** que necesita compartir y proveer el **ID de la Organización** como principal (También se puede especificar un OU, depende el CU)
 - Identificar Lambdas que estén corriendo Runtimes EOL (end-of-life): Usar El Evento de **AWS Health** asociado con EOL runtimes.
@@ -1118,20 +1119,20 @@ Netflix "simian-army"
   	- Calendarizar un AWS Glue Crawler que corra a diario en el segundo Bucket
   	- Correr queries en Athena directamente en el segundo bucket.
 - Se necesita generar una lista de los nodos que contienen un archivo en específico:
-	- Configurar SSM para crear un Inventory Custom desde un script que scanee los nodos buscando el archivo.
+	- Configurar SSM para crear un **Inventory Custom** desde un script que scanee los nodos buscando el archivo.
  	- Usar el **Resource Data Sync** para exportar los hallazgos a un Bucket S3
-  	- Usar Athena para filtrar los resultados.
+  	- **Usar Athena** para filtrar los resultados.
 - Migrar repositorio a CodeCommit sin perder el history:
 	- Crear Repositorio en CodeCommit
  	- Clonar el repositorio al ambiente local usar el argumento **mirror** (Con mirror sobrescribirá el repositorio remoto con los branches locales)
   	- Hacer push a CodeCommit
 - Compartir librerías a las cuentas de la organización:
-	- Crear un dominio en CodeArtifact
+	- Crear un **dominio en CodeArtifact**
  	- Para cada package crear un repositorio en el dominio
-  	- Configurar un Domain Policy para las member accounts.
-  	- Configurar CodeBuild para publicar las librerias a CodeArtifact en pa fase post-build
+  	- Configurar un **Domain Policy** para las member accounts.
+  	- Configurar CodeBuild para publicar las librerias a CodeArtifact en la fase post-build
 - Una compañia grande quiere incorporar a una compañia pequeña en AWS Oganizations con el mínimo impacto, la compañia grande usa ControlTower, ambas usan Config:
-	- Crear un AWS Config Conformance Pack que contenga las politiccas que tiene la compañía grande, para determinar el impacto de ControlTower en la migración.
+	- Crear un AWS Config Conformance Pack que contenga las politicas que tiene la compañía grande, para determinar el impacto de ControlTower en la migración.
  	- Borrar el Configuration Recorder y el Config Conformace pack de la cuenta pequeña (para que use después el de la organización)
   	- Crear un `AWSControlTowerExecution` Role en la cuenta de la compañía pequeña. (El rol debe tener un trust relationship)
   	- Proveer el email, nombre y apellido del dueño de la cuenta para completar el proceso de enrolamiento de **AWS Control Tower Account Factory** 
@@ -1142,7 +1143,6 @@ Netflix "simian-army"
  	- Configurar un **File System Policy** para permitir al rol de la instancia escribir y leer al file system, incluyendo la condición que solo pueda accesar usando el **access point** creado. (Access points son puntos de entrada específicos de la aplicación al EFS y brindan a los clientes acceso a un directorio o subdirectorio específico en el sistema de archivos)
 - Para usar EFS CrossAccount, se necesita una VPC Peering o VPC Transit Gateway para conectar las VPC.
 - https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html
-- 
 
 
 ## Imágenes
