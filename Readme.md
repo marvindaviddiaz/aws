@@ -1,22 +1,28 @@
 # Conceptos de AWS
 
 ## CodeCommit
-- **CodeCommit Notifications** para notificaciones básicas y **CodeCommit Trigger** para Invocar Lambdas desde CodeCommit
+- **CodeCommit Notifications** para notificaciones de **Comments, PR, Branches, Tags, Approvals**. Los targets de estas notificaciones son **SNS Target y AWS Chatbot**
+- **CodeCommit Trigger** reaccionar a eventos de **Push, Create/Delete Branch** los target son **SNS y Lambdas**
 - La política que deben tener los developers es **AWSCodeCommitPowerUser** (no permite crear y borrar repositorios), y restringir que suban código a master con política Deny.
 
 ## CodeBuild (buildspec.yml)
 - En la definición se elige la imagen que hará el Build: Managed (no incluyen frameworks) o Custom, recursos (VPC), etc.. Lo mínimo son 3GB y 2 vCPUs.
 - El archivo de configuración se compone de: Variables, Fases, Artefactos. 
 - En el buildspec.yml se configura el **runtime-version** ejemplo: `docker: 18`, `nodejs: latest`.
-- Se recomienda almacenar los artefactos de CodeBuild en S3, habilitar versionamiento en el Bucket.
+- Se recomienda almacenar los artefactos de CodeBuild en S3 y habilitar versionamiento en el Bucket.
 
 ## CodeDeploy (appspec.yml)
 - CodeDeploy permite desplegar en **EC2/Onpremise (con agente CodeDeploy), Lambda, ECS**
 - **Deployments Groups**: Son grupos de instancias ó ASG donde se harán los Deploys, **Si son instancias  se tiene que elegir por medio de Tags**
-- **Hooks**: Pasos de cada etapa del Deploy: **ApplicationStop, DownloadBundle, BeforeInstall, Install,ApplicationStart, ValidateService**. Varían según el tipo de aplicación y el tipo de Despliegue: BlueGreen, In-place, etc..
 - CodeDeploy permite crear triggers para deployments fallidos, se puede llamar a SNS.
+- Para desplegar OnPremise hay dos formas: 1. Creando IAM User y configurar con aws cli (forma sencilla, ambiente pequeños), 2. Con Rol y obteniendo credenciales temporales de STS usando un daemon (más segura y trabajosa).
+ 
+### CodeDeploy - Lifecycle Event Hooks: 
+- El contenido de la sección "hooks" del archivo AppSpec varía según la plataforma y deployment.
 
-### Deployment Configurations: 
+<img src="https://github.com/marvindaviddiaz/aws/assets/13956614/12155fec-85cc-451b-95b3-9e0736fda196" width="50%" height="50%"/>
+
+### CodeDeploy - Deployment Configurations: 
 - Donde se define el tipo de Deployment, **para EC2** tenemos los siguientes:
   	- **In-Place**:
 		- AllAtOnce
@@ -31,29 +37,23 @@
 	- Canary: **TWO INCREMENTS** Ej. Mandar el 10% del tráfico por 10 minutos, y si todo va bien, el 100% del tráfico pasa a la nueva versión
 	- Linear: **EQUALS INCREMENTS** Ej. Mandar incrementos de 10% del tráfico cada 10 minutos (se completaría en 100 minutos ó 10 veces) 
 
-https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html
-
-### Rollbacks
+### CodeDeploy - Rollbacks
 - Los rollbacks se pueden hacer manuales ó automáticos, los automáticos pueden ser: 
- 1. basados en que si Falla el Deploy
+ 1. Basados en que si Falla el Deploy
  2. Basados en Umbrales de alguna alarma de Cloudwatch (Ej, si el cpu de una nueva instalación sobrepasa el 75% hacer rollback)
-
-### On premise Instances:
-- Para desplegar OnPremise hay dos formas: 1. Creando IAM User y configurar con aws cli (forma sencilla, ambiente pequeños), 2. Con Rol y obteniendo credenciales temporales de STS usando un daemon (más segura y trabajosa).
 
 ## Code Pipeline:
 - Por cada branch se debe crear un pipeline
 - Los Artifacts de cada etapa se almacenan en S3 y son la entrada para la siguiente etapa, son diferentes a los Artifacts de CodeBuild
 - Para iniciar el pipeline se puede de 2 formas:  Automático (CloudWatch Events) ó Periódico (CodePipeline Poll)
-- Se pueden agregar **ManualAprovals** dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo pipeline)
-- Cuando un pipeline se define por CF, el atributo `runOrder` en los StageAction indica el órden de ejecución.
+- Se pueden agregar **ManualAprovals** dentro de un paso del Pipeline para intervención humana (Deploy to Prod en un solo branch/pipeline)
+- Cuando un pipeline se define por CF, el atributo `runOrder` en los **StageAction** indica el órden de ejecución.
 - Se puede ejecutar un lambda desde el pipeline. Con `PutJobSuccessResult`, `PutJobFailureResult` se manda el resultado. Ej. Hacer un Request 200 al sitio web después del deploy, 
 - Un buen CU para CodePipeline es desplegar templates de CloudFormation, también con CF se pueden crear pipelines 
 
 ## Code Star:
-- Es como CodePipeline pero con un UI más sencillo y con plantillas por lenguaje de programación y/ó frameworks. Tiene dashboardspara ver los builds, monitoreo, jira, etc. En las opciones del proyecto se puede ver toda la configuración asociada: buckets, roles de servicio, CF.. 
-- Por debajo usa CF, CodeCommit, CodeBuild, CodePipeline, según la plantilla que se usó.
-- A bajo nivel CodeStar está configurado con un CF template.yml usando una transformación `AWS::CodeStar`
+- Integra CodeCommit, CodeBuild, CodeDeploy y CodePipeline, usando CF con una transformación `AWS::CodeStar`
+- El UI es sencillo, usa templates por lenguaje de programación y/ó frameworks. Tiene dashboards para ver los builds, monitoreo, jira, etc. En las opciones del proyecto se puede ver toda la configuración asociada: buckets, roles de servicio, CF.. 
 
 ## Jenkins:
 - Jenkis puede reemplazar CodeBuild / CodeDeploy / CodePipeline y/ó trabajar con alguno de estos, pero esta solución no es serverless
@@ -69,16 +69,15 @@ https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configuration
 
 ## Code Guru
 - Automatiza las revisiones de código, usa ML. **CodeGuru Reviewer** (analisis estático) y **CodeGuru Profiler** (performance en ejecución)
-- Soporta Java y Python, se integra con Github, Bitbucket, CodeCommit. Puede ser usado en aplicaciones corriendo en AWS o OnPremise
+- Soporta Java y Python, se integra con Github, Bitbucket, CodeCommit. Puede ser usado en aplicaciones corriendo en AWS/OnPremise
 - **CodeGuru Reviewer Secrets Detector** Usa ML para detectar secrets, passwords, llaves, etc. en el código
 - Cuando se asocia CodeGuru Reviewer con un repositorio de CodeCommit, **automáticamente analyza los pull requests.**
 
-
 ## Elastic Beanstalk
-- En EB se puedeb crear ambientes de 2 tipos: Web Server, Worker (Tareas de larga duración ó calendarizadas).
+- En EB se puedeb crear ambientes de 2 tipos: **Web Server, Worker** (Tareas de larga duración ó calendarizadas).
 - Los tipo **Workers** crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
-- Cuando se unsa EB Cli los valores especificados en el comando tiene prioridad a los archivos .ebextensions
-- La BD debe crearse como parte del ambiente de Beanstalk ó por aparte, dependiendo si se quiere que la BD forme parte del mismo ciclo de vida de la aplicación de Beanstalk, ya que si queremos conservar la BD aunque se elimine el ambiente lo mejor es crear la BD por separado.
+- Cuando se usa EB Cli los valores especificados en el comando tiene prioridad a los archivos .ebextensions
+- La BD se recomienda crear aparte, si no se quiere que forme parte del mismo ciclo de vida de la aplicación de Beanstalk así aunque se elimine el ambiente no borra la BD.
 - Elastic Beanstalk no reemplaza automáticamente las instancias en las que la aplicación haya fallado. De forma predeterminada, Elastic Beanstalk usa HealtCheck de TCP de ELB.
 
 - **Deployments**
