@@ -1145,6 +1145,7 @@ Netflix "simian-army"
 - Montar EFS en una instancia limitando el path donde deberá montarse: /data/application-b
 	- Crear un **EFS access point** para la aplicación B con el root directory apuntando a /data/application-b. Setear los permisos a 0755
  	- Configurar un **File System Policy** para permitir al rol de la instancia escribir y leer al file system, incluyendo la condición que solo pueda accesar usando el **access point** creado. (Access points son puntos de entrada específicos de la aplicación al EFS y brindan a los clientes acceso a un directorio o subdirectorio específico en el sistema de archivos)
+- Para usar EFS CrossAccount, se necesita una VPC Peering o VPC Transit Gateway para conectar las VPC.
 
 
 ## Imágenes
@@ -1160,4 +1161,8 @@ Netflix "simian-army"
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/152058ab-406e-4304-ade4-29859dc3e9da)
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/df1c5f01-b912-4a73-a61b-9c0f0c793cec)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/fe0ef508-7879-4526-95e6-ea4114029be9)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/f536955d-da17-4462-963c-546ea6371913)
 
