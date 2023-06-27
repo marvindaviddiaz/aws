@@ -988,37 +988,33 @@ Netflix "simian-army"
 
 ## TIPS
 - Para setear el nombre de los artefactos en CodeBuild, se debe hacer en la **sección** de `artifacts` a nivel general. Ej: `build-$(AWS_REGION)`
-- El archivo buildspec.yml tiene **sections**, no phases.
 - Si piden que la configuración de deployment tenga al menos **5 máquinas de 20 siempre activas**, no usar porcentajes (25%), si no cantidad fija, porque si escala para abajo el porcentaje hará que el número de instancias baje a menos de 5 requeridas.
 - Si pide métricas de CodeBuild, para ver cuantos Builds se han hecho, cuantos fallaron, etc.. Esas métricas ya se provistas por Codebuild en Cloudwatch.
-- En las políticas de IAM se puede restringir de forma dinámica usando Tags, Ej: permitir bajar instancias a un usuario que tenga el tag **CostCente** siempre y cuando la instancia tambien tenga el tag **CostCenter**. **aws:PrincipalTag** is a tag that exists on the user or role making the call and ec2:ResourceTag is a tag that exists on an EC2 resource:
+- En las políticas de IAM se puede restringir de forma dinámica usando Tags,
 	- `ec2:ResourceTag/CostCenter` se compara contra `${aws:PrincipalTag/CostCenter}` en la política.
-- La solución **más rápida** para migrar servers que fueron configurados usando **Chef** es utilizar **AWS Server Migration Service** para subir sus máquinas administradas por Chef existentes a EC2 y administrarlas con Chef de la misma manera que lo ha hecho en su sistema interno.
-- Si se cambia el **Puerto** en CF de una **RDS::DBInstance** se hace un **Replacement** por una vacía, por lo que la base de datos deberá restaurarse a partir de backup. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html
+ 	- **aws:PrincipalTag** is a tag that exists on the user or role making the call and **ec2:ResourceTag** is a tag that exists on an EC2 resource.
+- La solución **más rápida** para migrar servers que fueron configurados usando **Chef** es utilizar **AWS Server Migration Service** para subir sus máquinas administradas por Chef existentes a EC2 y administrarlas con Chef de la misma manera que se ha hecho.
+- Si se cambia el **Puerto** en CF de una **RDS::DBInstance** se hace un **Replacement** y se crea una BD Vacía, por lo que la base de datos deberá restaurarse a partir de backup. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html
 - CU: RTO 1h y RPO 2h y se debe desplegar en otra región:
 	- Automatically run an **AWS Step function** to take an **hourly snapshot**, and then run a **Lambda function** that **copies the snapshot to your disaster recovery Region**. Use AWS CloudFormation StackSets to build your infrastructure in your production Region. Parameterize the stack set to use the snapshot ID to deploy RDS resources from snapshot. Use user data to deploy to your web servers from S3 on launch. In the case of an EC2 or RDS outage, manually update your public DNS to point to a maintenance static web page hosted in S3. Then, use the CloudFormation stack set to deploy to your disaster recovery Region, using the most recently-copied snapshot. Once the load balancer health checks pass, update Route 53 to point to your new load balancer.
 - Using **Chef Solo** for configuration management is recommended.
 - Lentitud en replicación de Data en Autora:
-	- Una de las causas más obvias de **Replication Lag** entre dos bases de datos de **Aurora** se debe a la configuración y los valores, por lo que hacer que el tamaño de almacenamiento sea comparable entre la base de datos de origen y la réplica de lectura es un buen comienzo para resolver la lentitud.
-	- **query_cache_type=0** es bueno para las tablas que se modifican con frecuencia, lo que provoca retrasos, porque la caché se bloquea y se actualiza con frecuencia.
-- CloudFront devuelve un error **InvalidViewerCertificate** en la consola cada vez que intentan agregar un nombre de dominio alternativo:
-	- Asegúrese de que haya un certificado confiable y válido adjunto a su distribución. (trusted CA, has a valid date, and is formatted correctly)
-	- Es posible que se haya generado un CloudFront HTTP 500 interno en el momento de la configuración, que debería ser transitorio y se resolverá si vuelve a intentarlo.
-- Your application is read-heavy, and the team has identified there are a number of common queries which take a long time to be returned from Aurora:
-	- Optimizar los queries, Implementar ElastiCache entre su aplicación y la base de datos
+	- Tamaño de almacenamiento no es igual entre la base de datos de origen y la réplica de lectura.
+	- Desabilitar el caché de queries **query_cache_type=0** porque la caché se bloquea y se actualiza con frecuencia.
+- Lentitud en lectura en Aurora:
+	- Optimizar queries, Implementar ElastiCache entre Aplicación y BD
 - Cuando el sitio está lento en algunas ubicaciones geográficas y se tienen 2 regiones, en Route 53 crear Latency Records apuntando a sus respectivas IPs. (latency-based routing)
 - Diseñar una **estrategia de DR multi-región en activo/activo**.
-	- Use **AWS Global Accelerator** to route traffic to healthy endpoints in multiple Regions, and deploy the application in multiple Availability Zones in each Region.
-- Para optimizar el rendimiento y minimizar el costola de **Lambda+ApiGateway**, se debe usar Lambda Provisiones Concurrency para reducir el cold-start
+	- Usar **AWS Global Accelerator** para rutear el tráfico a múltiples regiones usando Health Endpoints, y desplegar la aplicación en multiples AZ en cada región.
+- Para optimizar el rendimiento y minimizar el costo de **Lambda + ApiGateway**, se debe usar Lambda **Provision Concurrency** para **reducir** el **cold-start**
 - Para Loggear cada vez que cambia el estado de una instancia EC2, usar EventBridge para invocar un Lambda que escriba al Log.
 - ¿Cómo puede implementar un clúster de EKS en varias regiones mientras minimiza la latencia y garantiza una alta disponibilidad?
 	- Utilice **AWS Global Accelerator** para enrutar el tráfico a los clústeres de EKS en diferentes regiones y garantizar una alta disponibilidad y una baja latencia.
-- Para servir **contenido y hace transcoding** se recomienda usar **EFS** montando los volúmenes en cada servidor.
+- Para servir **contenido y hacer transcoding** se recomienda usar **EFS** montando los volúmenes en cada servidor.
 - Las funciones de AWS Lambda invocadas por AWS Step Functions deben implementarse en la misma región de AWS.
 - AWS Step Functions le permite especificar un tiempo de espera máximo para todo el workflow.
-- Al crear un entorno de varias cuentas bien diseñado con AWS Organizations, una práctica recomendada es crear OU's en función de los requisitos de seguridad e infraestructura. Crear varias cuentas de AWS para cada departamento y administrarlas por separado con AWS Organizations puede generar una complejidad innecesaria y una mayor sobrecarga administrativa.
-- Al crear multi cuentas mediante AWS Organizations, una práctica recomendada es crear **una cuenta de AWS independiente para cada aplicación**. **Mejor aislamiento de los recursos**, **mayor seguridad y cumplimiento**, y **mas sencillas las políticas de acceso**, **asignación de costos** y un **presupuesto más precisos** por departamento o equipo.
-- ¿Cuál es el enfoque recomendado para aplicar políticas en AWS Organizations para gobernar los entornos de PROD y DEV?
+- Al crear un entorno de varias cuentas bien diseñado con AWS Organizations, una práctica recomendada es crear OU's en función de los requisitos de seguridad e infraestructura. Crear varias cuentas de AWS para cada departamento y administrarlas por separado con AWS Organizations puede generar una complejidad innecesaria y una mayor sobrecarga administrativa. Otra práctica recomendada es crear **una cuenta de AWS independiente para cada aplicación**. **Mejor aislamiento de los recursos**, **mayor seguridad y cumplimiento**, y **mas sencillas las políticas de acceso**, **asignación de costos** y un **presupuesto más precisos** por departamento o equipo.
+- ¿Recomendación para aplicar políticas en AWS Organizations para gobernar los entornos de PROD y DEV?
 	- Apply policies at the **OU level to both the Prod and Dev** OUs to ensure **consistent enforcement** of policies across environments.
 - Systems Manager Automation `AWSSupport-TroubleshootCodeDeploy` se le manda el ID de la instancia fallida y el Deployment Id que falló y ejecuta una serie de pasos donde nos da detalles de porque falló el deployment.
 - Si se quiere tener **permisos escalables** a travéz de múltiples cuentas y ambientes (dev,test, prod) y que sigan el principio least-privelege? Se debe usar acceso **atribute-based** en lugar de **role-based**, se les coloca tag a los recursos basados en los ambientes en los que están y se le agregar esos tags también a los usuarios.
@@ -1026,7 +1022,7 @@ Netflix "simian-army"
 - **Fault Tolerant** = No se notan los fallos al perder un componente
 - VPC Peering es más barato que Transit Gateway, pero Transit Gateway es más simple a escala.
 - Se necesita asegurarse que todas las instancias de **ASG suban sus logs a S3** antes de **Terminate**? **Lyfecycle Hooks: Terminating: Wait**
-- Si queremos ser notificados cuando un Failover pase en RDS Multi AZ? La **forma más simple** es usando **RDS Event Notifications**
+- Si queremos ser notificados cuando un Failover pase en RDS Multi AZ? La **forma más simple** es usando **RDS Event Notifications** que usa SNS
 - En **ECS - AfterAllowTestTraffic** se puede especificar funciones de Lambda que pueden validar el deploy mediante el tráfico de prueba en y si fallan se hace rollback
 - Implementar Cross-region replication en s3:
 	- En la cuenta de AWS de **origen**, cree un **rol** de IAM que **S3 pueda asumir para replicar** objetos. Habilite el **versioning en ambos buckets**.
@@ -1047,14 +1043,14 @@ Netflix "simian-army"
 - El campo `initiated_by` de un evento de eventbridge disparado por OpsWorks, puede contener: `user, auto-scaling, auto-healing`
 - Las Custom Remediation Actions en Config deben usarse junto con los documentos de automatización de AWS Systems Manager.
 - Se puede configurar un **pipeline** para que use **cross-region actions** para que el **build y deployment** se corran en **otras regiones**.
-- AWS CodeBuild supports webhooks when the source repository is GitHub
+- AWS **CodeBuild** soporta **webhooks** para **GitHub**
 
 ## TIPS
-- `CodeBuild Report Group` es una sección del buildspec que permite publicar y mostrar los resultados de las pruebas de una compilación de CodeBuild:
-`reports:    ... 	base-directory: 'surefire/target/surefire-reports'`
-- Aplicar reglas WAF dieferentes para las cuentas de la organizacion:
-	- Configurar AWS Config para cada combinación de Región y cuentas en donde WAF se va a usar. (Requerido habilitar Config parausar políticas de seguridad de Firewall Manager)
- 	- Crear OUs y asociar las cuentas a esas OUs, antes de crear una política de Firewall Manager para cada OU.
+- `CodeBuild Report Group` es una sección del buildspec que permite publicar y mostrar reportes de las pruebas en CodeBuild:
+	`reports:    ... 	base-directory: 'surefire/target/surefire-reports'`
+- Aplicar reglas WAF diferentes para las cuentas de la organizacion:
+	- Configurar AWS Config para cada combinación de Región y cuentas en donde WAF se va a usar.
+ 	- Crear OUs y asociar las cuentas a esas OUs.
   	- En Firewall Manager, crear las políticas de WAF que se aplicaran a cada OU
 - Se necesita aplicar un límite en en la tasa peticiones usando WAF web ACL. El límite debe ser mayor para solicitudes de clientes internos que para solicitudes de clientes externos.
 	- Crear un Set de IPs en WAF que contiene las direcciones de los clientes internos. Crear una regla que haga match con esas IPs y colocarles un label INTERNAL.
@@ -1168,3 +1164,5 @@ Netflix "simian-army"
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/f536955d-da17-4462-963c-546ea6371913)
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/19982604-c183-4c7f-80b9-cb5d62f6417a)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/973597ad-e761-4974-a154-66cf5ecb61e2)
