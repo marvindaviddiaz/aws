@@ -77,7 +77,7 @@
 - En EB se puedeb crear ambientes de 2 tipos: **Web Server, Worker** (Tareas de larga duración ó calendarizadas).
 - Los tipo **Workers** crea 2 colas en SQS para procesar trabajos: `WorkerQueue` y `WorkerDeadLetterQueue`, adicionalmente crea un archivo cron.yaml, para ejecutar tareas calendarizadas.
 - Cuando se usa EB Cli los valores especificados en el comando tiene prioridad a los archivos .ebextensions
-- La BD se recomienda crear aparte, si no se quiere que forme parte del mismo ciclo de vida de la aplicación de Beanstalk así aunque se elimine el ambiente no borra la BD.
+- La **BD se recomienda crear aparte**, si no se quiere que forme parte del mismo ciclo de vida de la aplicación de Beanstalk así aunque se elimine el ambiente no borra la BD.
 - Elastic Beanstalk no reemplaza automáticamente las instancias en las que la aplicación haya fallado. De forma predeterminada, Elastic Beanstalk usa HealtCheck de TCP de ELB.
 
 - **Deployments**
