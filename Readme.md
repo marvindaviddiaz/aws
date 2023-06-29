@@ -4,6 +4,9 @@
 - **CodeCommit Notifications** para notificaciones de **Comments, PR, Branches, Tags, Approvals**. Los targets de estas notificaciones son **SNS Target y AWS Chatbot**
 - **CodeCommit Trigger** reaccionar a eventos de **Push, Create/Delete Branch** los target son **SNS y Lambdas**
 - La política que deben tener los developers es **AWSCodeCommitPowerUser** (no permite crear y borrar repositorios), y restringir que suban código a master con política Deny.
+- No existen políticas en CodeCommit, adicional CodeCommit soporta agregar Tags a los repositorios, con esto se puede configurar fácilmente una política de IAM para controlar el acceso basado en logs Tags.
+	- `  “Condition” : {
+      “StringEquals” : “aws:ResourceTag/Department”: “BigData”`
 
 ## CodeBuild (buildspec.yml)
 - En la definición se elige la imagen que hará el Build: Managed (no incluyen frameworks) o Custom, recursos (VPC), etc.. Lo mínimo son 3GB y 2 vCPUs.
@@ -249,6 +252,11 @@
 	- Manual (Downtime)
 	- Rolling (No Downtime, reduce capacity)
 	- Blue/Green (Usando un Stack aparte, y cambiando el routing en Route53)
+ - Caracteristicas de Opsworks stack Instances:
+ 	- Se puede usar instancias EC2 que se crearon fuera de OpsWork
+  	- Se pueden usar instancias que corren en su propio hardware
+   	- Puede iniciar y detener instancias manualmente
+   	- No puede mezclar instancias de Linux y Windows
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/54ab7b57-ed4c-46d5-969c-c4b6125fd95d)
 
 
@@ -1146,6 +1154,17 @@ Netflix "simian-army"
 - **Lambda Authorizer** es una función Lambda que se encarga de extraer el encabezado HTTP y el token, llamar a un servicio de autenticación existente y devolverá si se permite o deniega el acceso.
 - Como buena practica se debe asociar **CodeGuru Reviewer** a un repositorio de CodeCommit para que analice los PRs no integrarlo directamente en con CodeBuild.
 - Los service **quota** checks de **Trusted Advisor no incluyen un porcentaje de uso**. No sería posible usar estos datos para determinar exactamente cuándo el uso alcanza un porcentaje de la cuota. Se debe hacer por medio de Cloudwatch Alarms.
+- Escalar aplicación distribuida en OpsWorks y actualizar un archivo de configuración que contenga los hostnames de las Instancias del Layer para que sepan comunicarse entre sí dinámicamente?
+	- Crear un ChefRecipe para actualizar el archivo de configuración
+ 	- Configurar OpsWorks Stack para que use Custom Cookbooks
+  	- Usar `Configure` Lifecycle event que se llama cuando las instancias entran o salen del esstado en linea ó las IPs se asocian o desasocian.
+- Analizar PetaBytes de data bien estructurada con SQL que se recibe a gran velocidad? **Kinesis Firehose + Redshift**. Firehose es la forma más fácil de cargar data de transmisión en **S3, Redshift** (servicio de Data Warehouse petabyte-scale usando SQL), **Elastic Service**.  
+- Al desarrollar una aplicación web que necesite permisos sobre algún recursode AWS por ej. una tabla de Dynamo cree su aplicación para que solicite credenciales de seguridad temporales de forma dinámica usando **web identity federation**. Estas credenciales temporales están mapeadas a un ROL con los permisos necesarios para realizar las tareas requeridas por la aplicación móvil.
+	- With web identity federation, you don't need to create custom sign-in code or manage your own user identities. Instead, users of your app can sign in using a well-known external identity provider (IdP), such as Login with Amazon, Facebook, Google, or any other OpenID Connect (OIDC)-compatible IdP. They can receive an authentication token, and then exchange that token for temporary security credentials in AWS that map to an IAM role with permissions to use the resources in your AWS account. Using an IdP helps you keep your AWS account secure, because you don't have to embed and distribute long-term security credentials with your application. 
+- Usar Licencia en el mismo hardware de EC2? Usar **EC2 Dedicated Host** y manejar la licencia atravéz de **License Manager**
+- CodeBuild soporta cross-account ECR Images como Build Environment
+- Transformar data de Syslog a JSON en Kinesis Firehose antes de que sea entregada? Usar Lambda para hacer la transformación de la Data usando un Blueprint (Procesos ya definidos en Kinesis). La transformación de datos es un CU muy común para Kinesis Firehose
+
 
 ## Links
 - Config Rules: https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html
@@ -1172,3 +1191,10 @@ Netflix "simian-army"
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/19982604-c183-4c7f-80b9-cb5d62f6417a)
 
 ![image](https://github.com/marvindaviddiaz/aws/assets/13956614/973597ad-e761-4974-a154-66cf5ecb61e2)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/21a8102c-dcfb-4817-b6a8-c5ad9e83aa56)
+
+![image](https://github.com/marvindaviddiaz/aws/assets/13956614/330e623c-6ded-4e5c-89b2-004f50335afc)
+
+
+
