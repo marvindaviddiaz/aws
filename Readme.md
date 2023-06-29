@@ -1142,12 +1142,14 @@ Netflix "simian-army"
 	- Crear un **EFS access point** para la aplicación B con el root directory apuntando a /data/application-b. Setear los permisos a 0755
  	- Configurar un **File System Policy** para permitir al rol de la instancia escribir y leer al file system, incluyendo la condición que solo pueda accesar usando el **access point** creado. (Access points son puntos de entrada específicos de la aplicación al EFS y brindan a los clientes acceso a un directorio o subdirectorio específico en el sistema de archivos)
 - Para usar EFS CrossAccount, se necesita una VPC Peering o VPC Transit Gateway para conectar las VPC.
-- https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html
 - AWS Config proporciona varias **managed rules** que pueden detectar cambios en **Bucket ACLs o Bucket policies**.
 - **Lambda Authorizer** es una función Lambda que se encarga de extraer el encabezado HTTP y el token, llamar a un servicio de autenticación existente y devolverá si se permite o deniega el acceso.
 - Como buena practica se debe asociar **CodeGuru Reviewer** a un repositorio de CodeCommit para que analice los PRs no integrarlo directamente en con CodeBuild.
 - Los service **quota** checks de **Trusted Advisor no incluyen un porcentaje de uso**. No sería posible usar estos datos para determinar exactamente cuándo el uso alcanza un porcentaje de la cuota. Se debe hacer por medio de Cloudwatch Alarms.
 
+## Links
+- Config Rules: https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html
+- SSM Runbooks: https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-runbook-reference.html
 
 ## Imágenes
 
