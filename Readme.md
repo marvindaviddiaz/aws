@@ -806,6 +806,10 @@ Netflix "simian-army"
 - Cuando se usa con Active Directory, primero hay que crear usuarios y grupos en Identity Center exactamente como están en AD.
 - Usa ABAC (permisos usando Tags)
 - Soporta MFA (`Always-On` y `Context-Aware`)
+- Para conectar un self-managed Active Directory a Identity Center hay 2 formas:
+	- **Two-way trust relationship** entre **AWS Managed Microsoft AD** y a **self-managed AD** lee información de usuarios y grupos de su dominio para sincronizar metadatos de usuarios y grupos (sin contraseñas)
+	- **AD Connector** es un directory gateway que puede redirigir los request al self-managed AD sin almacenar en caché ninguna información en la nube.
+	- https://docs.aws.amazon.com/singlesignon/latest/userguide/connectonpremad.html
 
 ## AWS Tag Editor
 - Permite administrar los tags de múltiples recursos a la vez
